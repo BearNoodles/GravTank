@@ -26,6 +26,7 @@ public:
 	void SetRotatePause(bool value);
 	bool CameraTargetReached();
 	void ChangeCameraTarget(int dir);
+	int GetCameraTarget();
 	
 
 private:

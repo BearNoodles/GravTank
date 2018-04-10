@@ -14,7 +14,6 @@ Camera::Camera()
 // 1 is clockwise, -1 is anti clockwise
 void Camera::RotateCam(int dir = 1)
 {
-	//BROKEN FIX IT!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	float camx;
 	float camy;
 	camx = (cos(-dir * 3.14159 / 40) * cameraUp.x()) - (sin(-dir * 3.14159 / 40) * cameraUp.y());
@@ -110,6 +109,11 @@ void Camera::SetCameraTarget(int dir)
 
 	}
 
+}
+
+int Camera::GetCameraTarget()
+{
+	return currentTarget;
 }
 
 Camera::~Camera()

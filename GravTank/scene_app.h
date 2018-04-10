@@ -8,6 +8,7 @@
 #include <box2d/Box2D.h>
 #include "game_object.h"
 #include "Camera.h"
+#include "LevelBuilder.h"
 
 // FRAMEWORK FORWARD DECLARATIONS
 namespace gef
@@ -62,6 +63,9 @@ private:
 	GameObject ground_;
 	b2Body* ground_body_;
 
+	//levelBuild 
+	LevelBuilder levelBuilder;
+
 	//building variables
 	gef::Mesh* buildingMesh;
 	GameObject building;
@@ -70,6 +74,9 @@ private:
 	b2Body* buildingBody2;
 
 	Camera camera;
+
+	//Gravity
+	float gravityAmount;
 
 	float fps_;
 };

@@ -17,7 +17,8 @@ SceneApp::SceneApp(gef::Platform& platform) :
 	primitive_builder_(NULL),
 	font_(NULL),
 	world_(NULL),
-	player_body_(NULL)
+	player_body_(NULL),
+	levelBuilder(&platform_, world_)
 {
 }
 
@@ -140,15 +141,13 @@ void SceneApp::Init()
 	SetupLights();
 
 	// initialise the physics world
-	b2Vec2 gravity(0.0f, -9.81f);
+	gravityAmount = 9.81f;
+	b2Vec2 gravity(0.0f, -gravityAmount);
 	world_ = new b2World(gravity);
 
 	InitPlayer();
 	InitGround();
 	InitBuildings();
-
-	
-	
 }
 
 void SceneApp::CleanUp()
@@ -210,10 +209,10 @@ bool SceneApp::Update(float frame_time)
 	// get contact count
 	int contact_count = world_->GetContactCount();
 
-	if (player_body_->GetContactList() == NULL)
+	/*if (player_body_->GetContactList() == NULL)
 	{
 		camera.SetRotating(true);
-	}
+	}*/
 	
 
 	for (int contact_num = 0; contact_num<contact_count; ++contact_num)
@@ -352,7 +351,7 @@ void SceneApp::ProcessKeyboardInput()
 				else
 				{
 					camera.RotateCam(-1);
-					world_->SetGravity(b2Vec2(-1 * camera.GetCameraUp().x(), -1 * camera.GetCameraUp().y()));
+					world_->SetGravity(b2Vec2(-gravityAmount * camera.GetCameraUp().x(), -gravityAmount * camera.GetCameraUp().y()));
 				}
 			}
 			else if (b2Abs(player_body_->GetLinearVelocity().x) < 0.1f && b2Abs(player_body_->GetLinearVelocity().y) < 0.1f && playerRight)
@@ -367,8 +366,16 @@ void SceneApp::ProcessKeyboardInput()
 			else
 			{
 				//player_body_->SetLinearVelocity(b2Vec2((3 * camera.GetCameraRight().x) + world_->GetGravity().x, (3 * camera.GetCameraRight().y) + world_->GetGravity().y));
-				player_body_->SetLinearVelocity(b2Vec2((3 * camera.GetCameraRight().x) - 0.3f * camera.GetCameraUp().x(), (3 * camera.GetCameraRight().y) - 0.3f * camera.GetCameraUp().y()));
 				//player_body_->ApplyForceToCenter(b2Vec2((camera.GetCameraRight().x), (camera.GetCameraRight().y)), false);
+
+				if (camera.GetCameraTarget() == 0 || camera.GetCameraTarget() == 2)
+				{
+					player_body_->SetLinearVelocity(b2Vec2(3 * camera.GetCameraRight().x, player_body_->GetLinearVelocity().y));
+				}
+				else
+				{
+					player_body_->SetLinearVelocity(b2Vec2(player_body_->GetLinearVelocity().x, 3 * camera.GetCameraRight().y));
+				}
 				
 				playerRight = true;
 			}
@@ -394,7 +401,7 @@ void SceneApp::ProcessKeyboardInput()
 				else
 				{
 					camera.RotateCam(1);
-					world_->SetGravity(b2Vec2(-1 * camera.GetCameraUp().x(), -1 * camera.GetCameraUp().y()));
+					world_->SetGravity(b2Vec2(-gravityAmount * camera.GetCameraUp().x(), -gravityAmount * camera.GetCameraUp().y()));
 				}
 			}
 			else if (b2Abs(player_body_->GetLinearVelocity().x) < 0.1f && b2Abs(player_body_->GetLinearVelocity().y) < 0.1f && playerLeft)
@@ -407,10 +414,17 @@ void SceneApp::ProcessKeyboardInput()
 
 			else
 			{
-				//player_body_->SetLinearVelocity(b2Vec2((-3 * camera.GetCameraRight().x) + world_->GetGravity().x, (-3 * camera.GetCameraRight().y) + world_->GetGravity().y));
-				player_body_->SetLinearVelocity(b2Vec2((-3 * camera.GetCameraRight().x) - 0.3f * camera.GetCameraUp().x(), (-3 * camera.GetCameraRight().y) - 0.3f * camera.GetCameraUp().y()));
+				
 				//player_body_->ApplyForceToCenter(b2Vec2((camera.GetCameraRight().x), (camera.GetCameraRight().y)), false);
-
+				//player_body_->SetLinearVelocity(b2Vec2((-3 * camera.GetCameraRight().x) + world_->GetGravity().x, (-3 * camera.GetCameraRight().y) + world_->GetGravity().y));
+				if (camera.GetCameraTarget() == 0 || camera.GetCameraTarget() == 2)
+				{
+					player_body_->SetLinearVelocity(b2Vec2(-3 * camera.GetCameraRight().x, player_body_->GetLinearVelocity().y));
+				}
+				else
+				{
+					player_body_->SetLinearVelocity(b2Vec2(player_body_->GetLinearVelocity().x, -3 * camera.GetCameraRight().y));
+				}
 				playerLeft = true;
 			}
 
@@ -419,7 +433,15 @@ void SceneApp::ProcessKeyboardInput()
 		}
 		else
 		{
-			player_body_->SetLinearVelocity(b2Vec2_zero);
+			if (camera.GetCameraTarget() == 0 || camera.GetCameraTarget() == 2)
+			{
+				player_body_->SetLinearVelocity(b2Vec2(0.0f, player_body_->GetLinearVelocity().y));
+			}
+			else
+			{
+				player_body_->SetLinearVelocity(b2Vec2(player_body_->GetLinearVelocity().x, 0.0f));
+			}
+			//player_body_->SetLinearVelocity(b2Vec2(player_body_->GetLinearVelocity().x, player_body_->GetLinearVelocity().y));
 			//player_body_->SetLinearVelocity(b2Vec2(world_->GetGravity().x, world_->GetGravity().y));
 			if (!camera.GetRotating())
 			{
@@ -461,6 +483,14 @@ void SceneApp::Render()
 	//draw building
 	renderer_3d_->DrawMesh(building);
 	renderer_3d_->DrawMesh(building2);
+
+	for (int i = 0; i < 10; i++)
+	{
+		for (int j = 0; j < 10; j++)
+		{
+			renderer_3d_->DrawMesh(levelBuilder.GetBlock(i, j));
+		}
+	}
 
 	// draw player
 	renderer_3d_->set_override_material(&primitive_builder_->red_material());
@@ -542,7 +572,7 @@ void SceneApp::InitGround()
 void SceneApp::InitBuildings()
 {
 	// building dimensions
-	gef::Vector4 building_half_dimensions(2.0f, 2.5f, 0.5f);
+	gef::Vector4 building_half_dimensions(1.0f, 1.0f, 0.5f);
 
 	// setup the mesh for the buildings
 	buildingMesh = primitive_builder_->CreateBoxMesh(building_half_dimensions);
@@ -552,10 +582,10 @@ void SceneApp::InitBuildings()
 	// create physics bodies
 	b2BodyDef body_def;
 	body_def.type = b2_staticBody;
-	body_def.position = b2Vec2(4.0f, 2.5f);
+	body_def.position = b2Vec2(4.0f, 1.0f);
 
 	buildingBody = world_->CreateBody(&body_def);
-	body_def.position = b2Vec2(-4.0f, 2.5f);
+	body_def.position = b2Vec2(-4.0f, 1.0f);
 	buildingBody2 = world_->CreateBody(&body_def);
 
 	// create the shape
@@ -573,6 +603,8 @@ void SceneApp::InitBuildings()
 	buildingBody->CreateFixture(&fixture_def);
 
 	buildingBody2->CreateFixture(&fixture_def);
+
+	levelBuilder.LoadLevel(&platform_, *world_);
 
 	// update visuals from simulation data
 	building.UpdateFromSimulation(buildingBody);
