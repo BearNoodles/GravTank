@@ -64,7 +64,7 @@ private:
 	b2Body* ground_body_;
 
 	//levelBuild 
-	LevelBuilder levelBuilder;
+	LevelBuilder* levelBuilder;
 
 	//building variables
 	gef::Mesh* buildingMesh;

@@ -17,8 +17,7 @@ SceneApp::SceneApp(gef::Platform& platform) :
 	primitive_builder_(NULL),
 	font_(NULL),
 	world_(NULL),
-	player_body_(NULL),
-	levelBuilder(&platform_, world_)
+	player_body_(NULL)
 {
 }
 
@@ -137,6 +136,8 @@ void SceneApp::Init()
 	// initialise primitive builder to make create some 3D geometry easier
 	primitive_builder_ = new PrimitiveBuilder(platform_);
 
+	
+
 	InitFont();
 	SetupLights();
 
@@ -144,7 +145,8 @@ void SceneApp::Init()
 	gravityAmount = 9.81f;
 	b2Vec2 gravity(0.0f, -gravityAmount);
 	world_ = new b2World(gravity);
-
+	levelBuilder = new LevelBuilder(platform_, *world_);
+	levelBuilder->LoadLevel();
 	InitPlayer();
 	InitGround();
 	InitBuildings();
@@ -488,7 +490,7 @@ void SceneApp::Render()
 	{
 		for (int j = 0; j < 10; j++)
 		{
-			renderer_3d_->DrawMesh(levelBuilder.GetBlock(i, j));
+			renderer_3d_->DrawMesh(levelBuilder->GetBlock(i, j));
 		}
 	}
 
@@ -604,7 +606,7 @@ void SceneApp::InitBuildings()
 
 	buildingBody2->CreateFixture(&fixture_def);
 
-	levelBuilder.LoadLevel(&platform_, *world_);
+	//levelBuilder.LoadLevel(&platform_, *world_);
 
 	// update visuals from simulation data
 	building.UpdateFromSimulation(buildingBody);

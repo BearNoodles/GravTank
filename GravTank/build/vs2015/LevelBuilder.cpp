@@ -3,14 +3,20 @@
 
 
 
-LevelBuilder::LevelBuilder(gef::Platform* platform_, b2World* world_)
+LevelBuilder::LevelBuilder(gef::Platform& platform, b2World& world) :
+	platform_(platform),
+	world_(world)
 {
-	platform = platform_;
-	world = world_;
-	primitive_builder_ = new PrimitiveBuilder(*platform);
+	
+	primitive_builder_ = new PrimitiveBuilder(platform_);
 }
 
-void LevelBuilder::LoadLevel(gef::Platform* platform, b2World worldd)
+void LevelBuilder::Init(gef::Platform &platform_, b2World &world_)
+{
+	
+}
+
+void LevelBuilder::LoadLevel()
 {
 	for (int i = 0; i < width; i++)
 	{
@@ -24,29 +30,29 @@ void LevelBuilder::LoadLevel(gef::Platform* platform, b2World worldd)
 			case 1:
 				// building dimensions
 				gef::Vector4 building_half_dimensions(1.0f, 1.0f, 0.5f);
-
+				
 				// setup the mesh for the buildings
 				levelBlocks[i][j].blockMesh = primitive_builder_->CreateBoxMesh(building_half_dimensions);
 				levelBlocks[i][j].blockObject.set_mesh(levelBlocks[i][j].blockMesh);
-
+				
 				// create physics bodies
 				b2BodyDef body_def;
 				body_def.type = b2_staticBody;
 				body_def.position = b2Vec2(i, j);
-
-				levelBlocks[i][j].blockBody = worldd.CreateBody(&body_def);
-
+				
+				levelBlocks[i][j].blockBody = world_.CreateBody(&body_def);
+				
 				// create the shape
 				b2PolygonShape shape;
 				shape.SetAsBox(building_half_dimensions.x(), building_half_dimensions.y());
-
+				
 				// create the fixture
 				b2FixtureDef fixture_def;
 				fixture_def.shape = &shape;
-
+				
 				// create the fixtures on the rigid bodies
 				levelBlocks[i][j].blockBody->CreateFixture(&fixture_def);
-
+				
 				// update visuals from simulation data
 				levelBlocks[i][j].blockObject.UpdateFromSimulation(levelBlocks[i][j].blockBody);
 				break;

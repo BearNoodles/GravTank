@@ -23,10 +23,11 @@ struct Block
 class LevelBuilder
 {
 public:
-	LevelBuilder(gef::Platform* platform_, b2World* world_);
+	LevelBuilder(gef::Platform &platform_, b2World &world_);
 	~LevelBuilder();
 
-	void LoadLevel(gef::Platform* platform, b2World world);
+	void Init(gef::Platform &platform_, b2World &world_);
+	void LoadLevel();
 	void RenderLevel();
 	GameObject GetBlock(int i, int j);
 
@@ -35,8 +36,8 @@ private:
 	const int width = 10;
 	const int height = 10;
 
-	gef::Platform* platform;
-	b2World* world;
+	gef::Platform& platform_;
+	b2World& world_;
 	//
 	PrimitiveBuilder* primitive_builder_;
 
