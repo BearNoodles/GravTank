@@ -5,9 +5,6 @@
 #include <box2d/Box2D.h>
 #include "game_object.h"
 
-#define WIDTH = 10
-#define HEIGHT = 10
-
 namespace gef
 {
 	class Platform;
@@ -26,32 +23,38 @@ public:
 	LevelBuilder(gef::Platform &platform_, b2World &world_);
 	~LevelBuilder();
 
-	void Init(gef::Platform &platform_, b2World &world_);
 	void LoadLevel();
 	void RenderLevel();
 	GameObject GetBlock(int i, int j);
+	b2Vec2 GetStartPosition();
 
 private:
 
-	const int width = 10;
-	const int height = 10;
+	const int width = 15;
+	const int height = 15;
 
 	gef::Platform& platform_;
 	b2World& world_;
 	//
 	PrimitiveBuilder* primitive_builder_;
+	b2Vec2 StartPosition;
 
-	Block levelBlocks[10][10];
-	int level1[10][10]{ { 1,1,1,1,1,1,1,1,1,1 },
-						{ 1,1,1,1,1,1,1,1,1,1 },
-						{ 1,1,1,1,1,1,1,1,1,1 },
-						{ 1,1,1,1,1,1,1,1,1,1 },
-						{ 1,1,1,1,1,1,1,1,1,1 },
-						{ 1,1,1,1,1,1,1,1,1,1 },
-						{ 1,1,1,1,1,1,1,1,1,1 },
-						{ 1,1,1,1,1,1,1,1,1,1 },
-						{ 1,1,1,1,1,1,1,1,1,1 },
-						{ 1,1,1,1,1,1,1,1,1,1 } };
+	Block levelBlocks[15][15];
+	int level1[15][15]{ { 1,1,1,1,1,1,1,1,1,1,1,1,1,1,1 },
+						{ 1,0,0,0,0,0,0,0,0,0,0,0,0,0,1 },
+						{ 1,0,0,0,0,0,0,0,0,0,0,0,0,0,1 },
+						{ 1,0,0,0,0,0,0,0,0,0,0,0,0,0,1 },
+						{ 1,0,0,0,0,0,0,0,0,0,0,0,0,0,1 },
+						{ 1,0,0,0,0,0,0,0,0,0,0,0,0,0,1 },
+						{ 1,0,0,0,0,0,0,0,0,0,0,0,0,0,1 },
+						{ 1,0,0,0,0,0,0,0,0,0,0,0,0,0,1 },
+						{ 1,0,0,0,0,0,0,0,0,0,0,0,0,0,1 },
+						{ 1,0,0,0,0,0,0,0,0,0,0,0,0,0,1 },
+						{ 1,0,0,0,0,0,0,0,0,0,0,0,0,0,1 }, 
+						{ 1,0,0,0,0,0,0,0,0,0,0,0,0,0,1 }, 
+						{ 1,0,0,0,0,0,0,0,0,0,0,0,0,0,1 }, 
+						{ 1,0,0,0,0,0,0,0,0,0,0,0,0,0,1 }, 
+						{ 1,1,1,1,1,1,1,1,1,1,1,1,1,1,1 } };
 	int level2[10][10]{ { 1,1,1,1,1,1,1,1,1,1 },
 						{ 1,1,1,1,1,1,1,1,1,1 },
 						{ 1,1,1,1,1,1,1,1,1,1 },

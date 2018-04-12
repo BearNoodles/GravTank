@@ -17,7 +17,8 @@ SceneApp::SceneApp(gef::Platform& platform) :
 	primitive_builder_(NULL),
 	font_(NULL),
 	world_(NULL),
-	player_body_(NULL)
+	player_body_(NULL),
+	enemyBody(NULL)
 {
 }
 
@@ -148,6 +149,7 @@ void SceneApp::Init()
 	levelBuilder = new LevelBuilder(platform_, *world_);
 	levelBuilder->LoadLevel();
 	InitPlayer();
+	//InitEnemy();
 	InitGround();
 	InitBuildings();
 }
@@ -177,6 +179,9 @@ void SceneApp::CleanUp()
 
 	delete sprite_renderer_;
 	sprite_renderer_ = NULL;
+
+	delete levelBuilder;
+	levelBuilder = NULL;
 }
 
 bool SceneApp::Update(float frame_time)
@@ -201,6 +206,8 @@ bool SceneApp::Update(float frame_time)
 
 	// update object visuals from simulation data
 	player_.UpdateFromSimulation(player_body_);
+
+	//enemy.UpdateFromSimulation(enemyBody);
 
 	// don't have to update the ground visuals as it is static
 
@@ -466,15 +473,14 @@ void SceneApp::Render()
 	gef::Matrix44 projection_matrix;
 	projection_matrix = platform_.PerspectiveProjectionFov(fov, aspect_ratio, 0.1f, 100.0f);
 	renderer_3d_->set_projection_matrix(projection_matrix);
-
+	
 	// view
-	gef::Vector4 camera_eye(-2.0f, 5.0f, 30.0f);
-	gef::Vector4 camera_lookat(0.0f, 5.0f, 0.0f);
-	//gef::Vector4 camera_up(0.0f, 1.0f, 0.0f);
+	gef::Vector4 camera_eye(player_body_->GetPosition().x, player_body_->GetPosition().y, 30.0f);
+	gef::Vector4 camera_lookat(player_body_->GetPosition().x, player_body_->GetPosition().y, 0.0f);
+	
 	gef::Matrix44 view_matrix;
 	view_matrix.LookAt(camera_eye, camera_lookat, camera.GetCameraUp());
 	renderer_3d_->set_view_matrix(view_matrix);
-
 
 	// draw 3d geometry
 	renderer_3d_->Begin();
@@ -486,9 +492,9 @@ void SceneApp::Render()
 	renderer_3d_->DrawMesh(building);
 	renderer_3d_->DrawMesh(building2);
 
-	for (int i = 0; i < 10; i++)
+	for (int i = 0; i < levelWidth; i++)
 	{
-		for (int j = 0; j < 10; j++)
+		for (int j = 0; j < levelHeight; j++)
 		{
 			renderer_3d_->DrawMesh(levelBuilder->GetBlock(i, j));
 		}
@@ -498,6 +504,11 @@ void SceneApp::Render()
 	renderer_3d_->set_override_material(&primitive_builder_->red_material());
 	renderer_3d_->DrawMesh(player_);
 	renderer_3d_->set_override_material(NULL);
+
+	//rendenemy
+	/*renderer_3d_->set_override_material(&primitive_builder_->blue_material());
+	renderer_3d_->DrawMesh(enemy);
+	renderer_3d_->set_override_material(NULL);*/
 
 	renderer_3d_->End();
 
@@ -516,7 +527,8 @@ void SceneApp::InitPlayer()
 	b2BodyDef player_body_def;
 	player_body_def.type = b2_dynamicBody;
 	player_body_def.fixedRotation = true;
-	player_body_def.position = b2Vec2(0.0f, 1.0f);
+	//player_body_def.position = levelBuilder->GetStartPosition();
+	player_body_def.position = b2Vec2(5, 5);
 
 	player_body_ = world_->CreateBody(&player_body_def);
 
@@ -537,6 +549,39 @@ void SceneApp::InitPlayer()
 
 	// update visuals from simulation data
 	player_.UpdateFromSimulation(player_body_);
+
+}
+
+void SceneApp::InitEnemy()
+{
+	// setup the mesh for the player
+	enemy.set_mesh(primitive_builder_->GetDefaultCubeMesh());
+
+	// create a physics body for the player
+	b2BodyDef enemy_body_def;
+	enemy_body_def.type = b2_dynamicBody;
+	enemy_body_def.fixedRotation = true;
+	enemy_body_def.position = b2Vec2(10, 6);
+
+	enemyBody = world_->CreateBody(&enemy_body_def);
+
+	// create the shape for the player
+	b2PolygonShape enemy_shape;
+	enemy_shape.SetAsBox(0.5f, 0.5f);
+
+	// create the fixture
+	b2FixtureDef enemy_fixture_def;
+	enemy_fixture_def.shape = &enemy_shape;
+	enemy_fixture_def.density = 1.0f;
+
+	// create the fixture on the rigid body
+	enemyBody->CreateFixture(&enemy_fixture_def);
+
+	//set player gamebject type
+	enemy.SetType(ENEMY);
+
+	// update visuals from simulation data
+	enemy.UpdateFromSimulation(enemyBody);
 
 }
 

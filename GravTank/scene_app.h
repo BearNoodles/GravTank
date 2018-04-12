@@ -9,6 +9,7 @@
 #include "game_object.h"
 #include "Camera.h"
 #include "LevelBuilder.h"
+#include "Enemy.h"
 
 // FRAMEWORK FORWARD DECLARATIONS
 namespace gef
@@ -30,6 +31,7 @@ public:
 	void Render();
 private:
 	void InitPlayer();
+	void InitEnemy();
 	void InitGround();
 	void InitBuildings();
 	void InitFont();
@@ -58,6 +60,10 @@ private:
 	bool playerRight = true;
 	bool playerLeft = true;
 
+	//1st enemy
+	Enemy enemy;
+	b2Body* enemyBody;
+
 	// ground variables
 	gef::Mesh* ground_mesh_;
 	GameObject ground_;
@@ -65,6 +71,8 @@ private:
 
 	//levelBuild 
 	LevelBuilder* levelBuilder;
+	int levelWidth = 15;
+	int levelHeight = 15;
 
 	//building variables
 	gef::Mesh* buildingMesh;

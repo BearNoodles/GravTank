@@ -11,11 +11,6 @@ LevelBuilder::LevelBuilder(gef::Platform& platform, b2World& world) :
 	primitive_builder_ = new PrimitiveBuilder(platform_);
 }
 
-void LevelBuilder::Init(gef::Platform &platform_, b2World &world_)
-{
-	
-}
-
 void LevelBuilder::LoadLevel()
 {
 	for (int i = 0; i < width; i++)
@@ -29,7 +24,7 @@ void LevelBuilder::LoadLevel()
 
 			case 1:
 				// building dimensions
-				gef::Vector4 building_half_dimensions(1.0f, 1.0f, 0.5f);
+				gef::Vector4 building_half_dimensions(2.0f, 2.0f, 0.5f);
 				
 				// setup the mesh for the buildings
 				levelBlocks[i][j].blockMesh = primitive_builder_->CreateBoxMesh(building_half_dimensions);
@@ -38,7 +33,7 @@ void LevelBuilder::LoadLevel()
 				// create physics bodies
 				b2BodyDef body_def;
 				body_def.type = b2_staticBody;
-				body_def.position = b2Vec2(i, j);
+				body_def.position = b2Vec2(4 * i, 4 * j);
 				
 				levelBlocks[i][j].blockBody = world_.CreateBody(&body_def);
 				
@@ -67,6 +62,11 @@ GameObject LevelBuilder::GetBlock(int i, int j)
 	return levelBlocks[i][j].blockObject;
 }
 
+b2Vec2 LevelBuilder::GetStartPosition()
+{
+	return StartPosition;
+}
+
 void LevelBuilder::RenderLevel()
 {
 
@@ -89,4 +89,6 @@ void LevelBuilder::SetLevels()
 
 LevelBuilder::~LevelBuilder()
 {
+	delete primitive_builder_;
+	primitive_builder_ = NULL;
 }
