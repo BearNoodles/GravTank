@@ -17,8 +17,7 @@ SceneApp::SceneApp(gef::Platform& platform) :
 	primitive_builder_(NULL),
 	font_(NULL),
 	world_(NULL),
-	player_body_(NULL),
-	enemyBody(NULL)
+	player_body_(NULL)
 {
 }
 
@@ -146,10 +145,10 @@ void SceneApp::Init()
 	gravityAmount = 9.81f;
 	b2Vec2 gravity(0.0f, -gravityAmount);
 	world_ = new b2World(gravity);
-	levelBuilder = new LevelBuilder(platform_, *world_);
+	levelBuilder = new LevelBuilder(world_, primitive_builder_);
 	levelBuilder->LoadLevel();
+	enemy = new Enemy(0, world_, primitive_builder_);
 	InitPlayer();
-	//InitEnemy();
 	InitGround();
 	InitBuildings();
 }
@@ -171,6 +170,9 @@ void SceneApp::CleanUp()
 
 	CleanUpFont();
 
+	delete levelBuilder;
+	levelBuilder = NULL;
+
 	delete primitive_builder_;
 	primitive_builder_ = NULL;
 
@@ -179,9 +181,6 @@ void SceneApp::CleanUp()
 
 	delete sprite_renderer_;
 	sprite_renderer_ = NULL;
-
-	delete levelBuilder;
-	levelBuilder = NULL;
 }
 
 bool SceneApp::Update(float frame_time)
@@ -207,7 +206,7 @@ bool SceneApp::Update(float frame_time)
 	// update object visuals from simulation data
 	player_.UpdateFromSimulation(player_body_);
 
-	//enemy.UpdateFromSimulation(enemyBody);
+	enemy->Update(world_->GetGravity());
 
 	// don't have to update the ground visuals as it is static
 
@@ -218,10 +217,10 @@ bool SceneApp::Update(float frame_time)
 	// get contact count
 	int contact_count = world_->GetContactCount();
 
-	/*if (player_body_->GetContactList() == NULL)
+	if (player_body_->GetContactList() == NULL)
 	{
-		camera.SetRotating(true);
-	}*/
+		camera.SetRotating(false);
+	}
 	
 
 	for (int contact_num = 0; contact_num<contact_count; ++contact_num)
@@ -249,41 +248,55 @@ bool SceneApp::Update(float frame_time)
 			gameObjectA = (GameObject*)bodyA->GetUserData();
 			gameObjectB = (GameObject*)bodyB->GetUserData();
 
-			GameObject* player = NULL;
-			GameObject* enemy = NULL;
+			GameObject* playerTemp = NULL;
+			GameObject* enemyTemp = NULL;
+
+			if (gameObjectA != NULL && gameObjectA->GetType() == BULLET)
+			{
+				delete &gameObjectA;
+				gameObjectA = NULL;
+				enemy->ReduceBulletCount();
+				continue;
+			}
+			else if (gameObjectB != NULL && gameObjectB->GetType() == BULLET)
+			{
+				delete &gameObjectB;
+				gameObjectB = NULL;
+				enemy->ReduceBulletCount();
+				continue;
+			}
 
 			// figure which one is the player
 			if (gameObjectA != NULL && gameObjectA->GetType() == PLAYER)
 			{
-				player = gameObjectA;
+				playerTemp = gameObjectA;
 				playerBody = bodyA;
 			}
 			else if (gameObjectA != NULL && gameObjectA->GetType() == ENEMY)
 			{
-				enemy = gameObjectA;
+				enemyTemp = gameObjectA;
 				enemyBody = bodyA;
 			}
 
 			if (gameObjectB != NULL && gameObjectB->GetType() == PLAYER)
 			{
-				player = gameObjectB;
+				playerTemp = gameObjectB;
 				playerBody = bodyB;
 			}
 			else if (gameObjectB != NULL && gameObjectB->GetType() == ENEMY)
 			{
-				enemy = gameObjectB;
+				enemyTemp = gameObjectB;
 				enemyBody = bodyB;
 			}
 
-			if (player)
+			if (playerTemp)
 			{
-				player->MyCollisionResponse();
+				playerTemp->MyCollisionResponse();
 				//playerBody->ApplyForceToCenter(b2Vec2(100.0f, 200.0f), true);
 			}
-			if (enemy)
+			if (enemyTemp)
 			{
-				enemy->MyCollisionResponse();
-				enemyBody->ApplyForceToCenter(b2Vec2(00.0f, 200.0f), true);
+				enemyTemp->MyCollisionResponse();
 			}
 
 		}
@@ -458,6 +471,11 @@ void SceneApp::ProcessKeyboardInput()
 				playerRight = false;
 			}
 		}
+
+		if (keyboard->IsKeyDown(gef::Keyboard::KC_SPACE))
+		{
+			enemy->Shoot(b2Vec2(0, 100));
+		}
 	}
 }
 
@@ -506,9 +524,17 @@ void SceneApp::Render()
 	renderer_3d_->set_override_material(NULL);
 
 	//rendenemy
-	/*renderer_3d_->set_override_material(&primitive_builder_->blue_material());
-	renderer_3d_->DrawMesh(enemy);
-	renderer_3d_->set_override_material(NULL);*/
+	renderer_3d_->set_override_material(&primitive_builder_->blue_material());
+	renderer_3d_->DrawMesh(*enemy);
+	renderer_3d_->set_override_material(NULL);
+
+	//
+	renderer_3d_->set_override_material(&primitive_builder_->red_material());
+	for (int i = 0; i < enemy->GetBulletCount(); i++)
+	{
+		renderer_3d_->DrawMesh(*enemy->GetBulletMesh(i));
+	}
+	renderer_3d_->set_override_material(NULL);
 
 	renderer_3d_->End();
 
@@ -549,39 +575,6 @@ void SceneApp::InitPlayer()
 
 	// update visuals from simulation data
 	player_.UpdateFromSimulation(player_body_);
-
-}
-
-void SceneApp::InitEnemy()
-{
-	// setup the mesh for the player
-	enemy.set_mesh(primitive_builder_->GetDefaultCubeMesh());
-
-	// create a physics body for the player
-	b2BodyDef enemy_body_def;
-	enemy_body_def.type = b2_dynamicBody;
-	enemy_body_def.fixedRotation = true;
-	enemy_body_def.position = b2Vec2(10, 6);
-
-	enemyBody = world_->CreateBody(&enemy_body_def);
-
-	// create the shape for the player
-	b2PolygonShape enemy_shape;
-	enemy_shape.SetAsBox(0.5f, 0.5f);
-
-	// create the fixture
-	b2FixtureDef enemy_fixture_def;
-	enemy_fixture_def.shape = &enemy_shape;
-	enemy_fixture_def.density = 1.0f;
-
-	// create the fixture on the rigid body
-	enemyBody->CreateFixture(&enemy_fixture_def);
-
-	//set player gamebject type
-	enemy.SetType(ENEMY);
-
-	// update visuals from simulation data
-	enemy.UpdateFromSimulation(enemyBody);
 
 }
 
@@ -676,7 +669,7 @@ void SceneApp::DrawHUD()
 	if(font_)
 	{
 		// display frame rate
-		font_->RenderText(sprite_renderer_, gef::Vector4(850.0f, 510.0f, -0.9f), 1.0f, 0xffffffff, gef::TJ_LEFT, "FPS: %.1f", player_body_->GetLinearVelocity().x);
+		font_->RenderText(sprite_renderer_, gef::Vector4(850.0f, 510.0f, -0.9f), 1.0f, 0xffffffff, gef::TJ_LEFT, "FPS: %.1f", fps_);
 	}
 }
 

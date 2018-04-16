@@ -61,8 +61,7 @@ private:
 	bool playerLeft = true;
 
 	//1st enemy
-	Enemy enemy;
-	b2Body* enemyBody;
+	Enemy* enemy;
 
 	// ground variables
 	gef::Mesh* ground_mesh_;

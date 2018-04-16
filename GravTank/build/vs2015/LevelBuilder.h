@@ -5,10 +5,6 @@
 #include <box2d/Box2D.h>
 #include "game_object.h"
 
-namespace gef
-{
-	class Platform;
-}
 
 struct Block
 {
@@ -20,7 +16,7 @@ struct Block
 class LevelBuilder
 {
 public:
-	LevelBuilder(gef::Platform &platform_, b2World &world_);
+	LevelBuilder(b2World* world_, PrimitiveBuilder* builder);
 	~LevelBuilder();
 
 	void LoadLevel();
@@ -33,8 +29,7 @@ private:
 	const int width = 15;
 	const int height = 15;
 
-	gef::Platform& platform_;
-	b2World& world_;
+	b2World* world_;
 	//
 	PrimitiveBuilder* primitive_builder_;
 	b2Vec2 StartPosition;
@@ -42,16 +37,16 @@ private:
 	Block levelBlocks[15][15];
 	int level1[15][15]{ { 1,1,1,1,1,1,1,1,1,1,1,1,1,1,1 },
 						{ 1,0,0,0,0,0,0,0,0,0,0,0,0,0,1 },
+						{ 1,1,0,0,0,0,0,0,0,0,0,0,0,0,1 },
 						{ 1,0,0,0,0,0,0,0,0,0,0,0,0,0,1 },
 						{ 1,0,0,0,0,0,0,0,0,0,0,0,0,0,1 },
+						{ 1,1,0,0,0,0,0,0,0,0,0,0,0,0,1 },
 						{ 1,0,0,0,0,0,0,0,0,0,0,0,0,0,1 },
 						{ 1,0,0,0,0,0,0,0,0,0,0,0,0,0,1 },
-						{ 1,0,0,0,0,0,0,0,0,0,0,0,0,0,1 },
-						{ 1,0,0,0,0,0,0,0,0,0,0,0,0,0,1 },
-						{ 1,0,0,0,0,0,0,0,0,0,0,0,0,0,1 },
+						{ 1,1,0,0,0,0,0,0,0,0,0,0,0,0,1 },
 						{ 1,0,0,0,0,0,0,0,0,0,0,0,0,0,1 },
 						{ 1,0,0,0,0,0,0,0,0,0,0,0,0,0,1 }, 
-						{ 1,0,0,0,0,0,0,0,0,0,0,0,0,0,1 }, 
+						{ 1,1,0,0,0,0,0,0,0,0,0,0,0,0,1 }, 
 						{ 1,0,0,0,0,0,0,0,0,0,0,0,0,0,1 }, 
 						{ 1,0,0,0,0,0,0,0,0,0,0,0,0,0,1 }, 
 						{ 1,1,1,1,1,1,1,1,1,1,1,1,1,1,1 } };

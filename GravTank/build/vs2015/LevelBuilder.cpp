@@ -3,12 +3,11 @@
 
 
 
-LevelBuilder::LevelBuilder(gef::Platform& platform, b2World& world) :
-	platform_(platform),
-	world_(world)
+LevelBuilder::LevelBuilder(b2World* world, PrimitiveBuilder* builder) :
+	world_(world),
+	primitive_builder_(builder)
 {
-	
-	primitive_builder_ = new PrimitiveBuilder(platform_);
+
 }
 
 void LevelBuilder::LoadLevel()
@@ -35,7 +34,7 @@ void LevelBuilder::LoadLevel()
 				body_def.type = b2_staticBody;
 				body_def.position = b2Vec2(4 * i, 4 * j);
 				
-				levelBlocks[i][j].blockBody = world_.CreateBody(&body_def);
+				levelBlocks[i][j].blockBody = world_->CreateBody(&body_def);
 				
 				// create the shape
 				b2PolygonShape shape;
@@ -89,6 +88,4 @@ void LevelBuilder::SetLevels()
 
 LevelBuilder::~LevelBuilder()
 {
-	delete primitive_builder_;
-	primitive_builder_ = NULL;
 }
