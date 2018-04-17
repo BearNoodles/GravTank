@@ -17,7 +17,8 @@ SceneApp::SceneApp(gef::Platform& platform) :
 	primitive_builder_(NULL),
 	font_(NULL),
 	world_(NULL),
-	player_body_(NULL)
+	player_body_(NULL),
+	toDel(NULL)
 {
 }
 
@@ -233,14 +234,8 @@ bool SceneApp::Update(float frame_time)
 
 			b2Body* playerBody = NULL;
 			b2Body* enemyBody = NULL;
+			b2Body* bulletBody = NULL;
 
-			// DO COLLISION RESPONSE HERE
-			//float massA = bodyA->GetMass();
-			//float massB = bodyB->GetMass();
-			//gef::DebugOut("Collision: %f kg and %f kg\n", massA, massB);
-
-			//bodyA->ApplyForceToCenter(b2Vec2(0.0f, 200.0f), true);
-			//bodyB->ApplyForceToCenter(b2Vec2(0.0f, 200.0f), true);
 
 			GameObject* gameObjectA = NULL;
 			GameObject* gameObjectB = NULL;
@@ -251,20 +246,33 @@ bool SceneApp::Update(float frame_time)
 			GameObject* playerTemp = NULL;
 			GameObject* enemyTemp = NULL;
 
-			if (gameObjectA != NULL && gameObjectA->GetType() == BULLET)
-			{
-				delete &gameObjectA;
-				gameObjectA = NULL;
-				enemy->ReduceBulletCount();
-				continue;
-			}
-			else if (gameObjectB != NULL && gameObjectB->GetType() == BULLET)
-			{
-				delete &gameObjectB;
-				gameObjectB = NULL;
-				enemy->ReduceBulletCount();
-				continue;
-			}
+			//if (gameObjectA != NULL && gameObjectA->GetType() == BULLET)
+			//{
+			//	if (gameObjectB != NULL && gameObjectB->GetType() == BULLET)
+			//	{
+			//		continue;
+			//	}
+			//	else if (gameObjectB == NULL)
+			//	{
+			//		continue;
+			//	}
+			//	
+			//	break;
+			//}
+			//else if (gameObjectB != NULL && gameObjectB->GetType() == BULLET)
+			//{
+			//	if (gameObjectA != NULL && gameObjectA->GetType() == BULLET)
+			//	{
+			//		continue;
+			//	}
+			//	else if (gameObjectA == NULL)
+			//	{
+			//		continue;
+			//	}
+			//	toDel = gameObjectB;
+			//
+			//	break;
+			//}
 
 			// figure which one is the player
 			if (gameObjectA != NULL && gameObjectA->GetType() == PLAYER)
@@ -304,7 +312,6 @@ bool SceneApp::Update(float frame_time)
 		// Get next contact point
 		contact = contact->GetNext();
 	}
-
 
 	return true;
 }
@@ -530,9 +537,9 @@ void SceneApp::Render()
 
 	//
 	renderer_3d_->set_override_material(&primitive_builder_->red_material());
-	for (int i = 0; i < enemy->GetBulletCount(); i++)
+	if (!enemy->GetCanShoot())
 	{
-		renderer_3d_->DrawMesh(*enemy->GetBulletMesh(i));
+		renderer_3d_->DrawMesh(*enemy->GetBulletMesh());
 	}
 	renderer_3d_->set_override_material(NULL);
 

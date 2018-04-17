@@ -31,7 +31,6 @@ public:
 	void Render();
 private:
 	void InitPlayer();
-	void InitEnemy();
 	void InitGround();
 	void InitBuildings();
 	void InitFont();
@@ -41,7 +40,7 @@ private:
 	void ProcessControllerInput();
 	void ProcessKeyboardInput();
 
-
+	GameObject* toDel;
     
 	gef::SpriteRenderer* sprite_renderer_;
 	gef::Font* font_;

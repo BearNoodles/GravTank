@@ -1,6 +1,13 @@
 #include "game_object.h"
 #include <system/debug_log.h>
 
+
+
+
+GameObject::GameObject()
+{
+	SetType(NONE);
+}
 //
 // UpdateFromSimulation
 // 
@@ -42,8 +49,9 @@ void GameObject::SetType(ObjectType type)
 
 ObjectType GameObject::GetType()
 {
-	if (type_member > 0)
+	if (type_member!= NULL && type_member > 0)
 		return type_member;
 	else
 		return NONE;
 }
+

@@ -12,6 +12,7 @@ enum ObjectType
 class GameObject : public gef::MeshInstance
 {
 public:
+	GameObject();
 	void UpdateFromSimulation(const b2Body* body);
 	void MyCollisionResponse();
 	void SetType(ObjectType type);

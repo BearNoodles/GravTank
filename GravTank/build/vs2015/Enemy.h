@@ -12,13 +12,13 @@ public:
 	void Update(b2Vec2 gravity);
 	void ReduceBulletCount();
 	void Shoot(b2Vec2 force);
-	int GetBulletCount();
-	gef::MeshInstance* GetBulletMesh(int index);
+	bool GetCanShoot();
+	gef::MeshInstance* GetBulletMesh();
 
 private:
 	void Init();
-	Bullet* bullets[10];
-	int bulletCount;
+	Bullet* bullet;
+	bool canShoot;
 	int changeTimer;
 	int changeAt;
 	int direction;

@@ -4,11 +4,12 @@
 
 Enemy::Enemy(int type, b2World* world, PrimitiveBuilder* builder) :
 	m_world(world),
-	m_builder(builder)
+	m_builder(builder),
+	bullet(NULL)
 {
 	enemyType = type;
 	Init();
-	bulletCount = 0;
+	canShoot = true;
 }
 
 void Enemy::Init()
@@ -89,37 +90,84 @@ void Enemy::Update(b2Vec2 gravity)
 
 	UpdateFromSimulation(m_body);
 
-	for (int i = 0; i < GetBulletCount(); i++)
+
+	if (bullet != NULL)
 	{
-		bullets[i]->Update();
+		bullet->Update();
+
+		b2Contact* contact = m_world->GetContactList();
+
+		int contact_count = m_world->GetContactCount();
+
+		if (bullet->GetBody()->GetContactList() != NULL)
+		{
+
+		}
+		for (int contact_num = 0; contact_num < contact_count; ++contact_num)
+		{
+			if (contact->IsTouching())
+			{
+				// get the colliding bodies
+				b2Body* bodyA = contact->GetFixtureA()->GetBody();
+				b2Body* bodyB = contact->GetFixtureB()->GetBody();
+
+				b2Body* bulletBody = NULL;
+
+
+				GameObject* gameObjectA = NULL;
+				GameObject* gameObjectB = NULL;
+
+				gameObjectA = (GameObject*)bodyA->GetUserData();
+				gameObjectB = (GameObject*)bodyB->GetUserData();
+
+				GameObject* bulletTemp = NULL;
+				GameObject* enemyTemp = NULL;
+
+				// figure which one is the player
+				if (gameObjectA != NULL && gameObjectA->GetType() == BULLET)
+				{ 
+					if (gameObjectB != NULL && gameObjectB->GetType() != BULLET&& gameObjectB->GetType() != ENEMY)
+					{
+						delete &bullet;
+						bullet = NULL;
+					}
+				}
+				else if (gameObjectB != NULL && gameObjectB->GetType() == BULLET)
+				{
+					if (gameObjectA != NULL && gameObjectA->GetType() != BULLET&& gameObjectA->GetType() != ENEMY)
+					{
+						delete &bullet;
+						bullet = NULL;
+					}
+				}
+			}
+		}
 	}
 
 }
 
-gef::MeshInstance* Enemy::GetBulletMesh(int index)
+gef::MeshInstance* Enemy::GetBulletMesh()
 {
-	return bullets[index];
+	return bullet;
 }
 
-int Enemy::GetBulletCount()
+bool Enemy::GetCanShoot()
 {
-	return bulletCount;
+	return canShoot;
 }
 
 void Enemy::Shoot(b2Vec2 force)
 {
-	if (bulletCount >= 10)
+	if (canShoot)
 	{
-		return;
+		bullet = new Bullet(force, m_body->GetPosition(), m_world, m_builder);
+		canShoot = false;
 	}
-
-	bullets[bulletCount] = new Bullet(force, m_body->GetPosition(), m_world, m_builder);
-	bulletCount++;
 }
 
 void Enemy::ReduceBulletCount()
 {
-	bulletCount--;
+	
 }
 
 

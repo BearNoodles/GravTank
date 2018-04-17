@@ -6,7 +6,7 @@ Bullet::Bullet(b2Vec2 force, b2Vec2 pos, b2World* world, PrimitiveBuilder* build
 	m_world(world),
 	m_builder(builder)
 {
-	SetType(BULLET);
+	
 	gef::Vector4 half_dimensions(0.2f, 0.2f, 0.5f);
 	// setup the mesh
 	mesh_ = m_builder->CreateBoxMesh(half_dimensions);
@@ -33,7 +33,7 @@ Bullet::Bullet(b2Vec2 force, b2Vec2 pos, b2World* world, PrimitiveBuilder* build
 	m_body->CreateFixture(&fixture_def);
 
 	//set player gamebject type
-	SetType(ENEMY);
+	SetType(BULLET);
 
 	m_body->ApplyForceToCenter(force, true);
 
@@ -51,7 +51,21 @@ void Bullet::Init()
 	
 }
 
+b2Body* Bullet::GetBody()
+{
+	return m_body;
+}
+
+void Bullet::CleanUp()
+{
+	delete m_world;
+	m_world = NULL;
+	delete m_builder;
+	m_builder = NULL;
+}
+
 
 Bullet::~Bullet()
 {
+	CleanUp();
 }
