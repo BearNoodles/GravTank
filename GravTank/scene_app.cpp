@@ -149,7 +149,7 @@ void SceneApp::Init()
 	levelBuilder = new LevelBuilder(world_, primitive_builder_);
 	levelBuilder->LoadLevel();
 	enemy = new Enemy(0, world_, primitive_builder_);
-	InitPlayer();
+	player = new Player(world_, primitive_builder_);
 	InitGround();
 	InitBuildings();
 }
@@ -205,7 +205,7 @@ bool SceneApp::Update(float frame_time)
 	world_->Step(timeStep, velocityIterations, positionIterations);
 
 	// update object visuals from simulation data
-	player_.UpdateFromSimulation(player_body_);
+	player->Update();
 
 	enemy->Update(world_->GetGravity());
 
@@ -218,11 +218,6 @@ bool SceneApp::Update(float frame_time)
 	// get contact count
 	int contact_count = world_->GetContactCount();
 
-	if (player_body_->GetContactList() == NULL)
-	{
-		camera.SetRotating(false);
-	}
-	
 
 	for (int contact_num = 0; contact_num<contact_count; ++contact_num)
 	{
@@ -245,34 +240,9 @@ bool SceneApp::Update(float frame_time)
 
 			GameObject* playerTemp = NULL;
 			GameObject* enemyTemp = NULL;
+			GameObject* bulletTemp = NULL;
 
-			//if (gameObjectA != NULL && gameObjectA->GetType() == BULLET)
-			//{
-			//	if (gameObjectB != NULL && gameObjectB->GetType() == BULLET)
-			//	{
-			//		continue;
-			//	}
-			//	else if (gameObjectB == NULL)
-			//	{
-			//		continue;
-			//	}
-			//	
-			//	break;
-			//}
-			//else if (gameObjectB != NULL && gameObjectB->GetType() == BULLET)
-			//{
-			//	if (gameObjectA != NULL && gameObjectA->GetType() == BULLET)
-			//	{
-			//		continue;
-			//	}
-			//	else if (gameObjectA == NULL)
-			//	{
-			//		continue;
-			//	}
-			//	toDel = gameObjectB;
-			//
-			//	break;
-			//}
+			
 
 			// figure which one is the player
 			if (gameObjectA != NULL && gameObjectA->GetType() == PLAYER)
@@ -285,6 +255,11 @@ bool SceneApp::Update(float frame_time)
 				enemyTemp = gameObjectA;
 				enemyBody = bodyA;
 			}
+			else if (gameObjectA != NULL && gameObjectA->GetType() == BULLET)
+			{
+				bulletTemp = gameObjectA;
+				bulletBody = bodyA;
+			}
 
 			if (gameObjectB != NULL && gameObjectB->GetType() == PLAYER)
 			{
@@ -295,6 +270,11 @@ bool SceneApp::Update(float frame_time)
 			{
 				enemyTemp = gameObjectB;
 				enemyBody = bodyB;
+			}
+			else if (gameObjectB != NULL && gameObjectB->GetType() == BULLET)
+			{
+				bulletTemp = gameObjectB;
+				bulletBody = bodyB;
 			}
 
 			if (playerTemp)
@@ -366,16 +346,16 @@ void SceneApp::ProcessKeyboardInput()
 		{
 			if (camera.GetRotating())
 			{
-				playerRight = true;
-				if (playerLeft)
+				player->SetPlayerRight(true);
+				if (player->GetPlayerLeft())
 				{
 					camera.ChangeCameraTarget(-1);
-					playerLeft = false;
+					player->SetPlayerLeft(false);
 				}
 				if (camera.CameraTargetReached())
 				{
 					camera.SetRotating(false);
-					playerRight = false;
+					player->SetPlayerRight(false);
 				}
 				else
 				{
@@ -383,49 +363,45 @@ void SceneApp::ProcessKeyboardInput()
 					world_->SetGravity(b2Vec2(-gravityAmount * camera.GetCameraUp().x(), -gravityAmount * camera.GetCameraUp().y()));
 				}
 			}
-			else if (b2Abs(player_body_->GetLinearVelocity().x) < 0.1f && b2Abs(player_body_->GetLinearVelocity().y) < 0.1f && playerRight)
+			else if (b2Abs(player->GetVelocity().x) < 0.1f && b2Abs(player->GetVelocity().y) < 0.1f && player->GetPlayerRight())
 			{
 				//rotate
 				camera.SetRotating(true);
 				camera.ChangeCameraTarget(-1);
-				player_body_->SetLinearVelocity(b2Vec2_zero);
-				
+				player->SetVelocity(b2Vec2_zero);
 			}
 
 			else
 			{
-				//player_body_->SetLinearVelocity(b2Vec2((3 * camera.GetCameraRight().x) + world_->GetGravity().x, (3 * camera.GetCameraRight().y) + world_->GetGravity().y));
-				//player_body_->ApplyForceToCenter(b2Vec2((camera.GetCameraRight().x), (camera.GetCameraRight().y)), false);
-
 				if (camera.GetCameraTarget() == 0 || camera.GetCameraTarget() == 2)
 				{
-					player_body_->SetLinearVelocity(b2Vec2(3 * camera.GetCameraRight().x, player_body_->GetLinearVelocity().y));
+					player->SetVelocity(b2Vec2(3 * camera.GetCameraRight().x, player->GetVelocity().y));
 				}
 				else
 				{
-					player_body_->SetLinearVelocity(b2Vec2(player_body_->GetLinearVelocity().x, 3 * camera.GetCameraRight().y));
+					player->SetVelocity(b2Vec2(player->GetVelocity().x, 3 * camera.GetCameraRight().y));
 				}
 				
-				playerRight = true;
+				player->SetPlayerRight(true);
 			}
 
-			playerLeft = false;
+			player->SetPlayerLeft(false);
 			
 		}
 		else if (keyboard->IsKeyDown(gef::Keyboard::KC_LEFT))
 		{
 			if (camera.GetRotating())
 			{
-				playerLeft = true;
-				if (playerRight)
+				player->SetPlayerLeft(true);
+				if (player->GetPlayerRight())
 				{
 					camera.ChangeCameraTarget(1);
-					playerRight = false;
+					player->SetPlayerRight(false);
 				}
 				if (camera.CameraTargetReached())
 				{
 					camera.SetRotating(false);
-					playerLeft = false;
+					player->SetPlayerLeft(false);
 				}
 				else
 				{
@@ -433,49 +409,46 @@ void SceneApp::ProcessKeyboardInput()
 					world_->SetGravity(b2Vec2(-gravityAmount * camera.GetCameraUp().x(), -gravityAmount * camera.GetCameraUp().y()));
 				}
 			}
-			else if (b2Abs(player_body_->GetLinearVelocity().x) < 0.1f && b2Abs(player_body_->GetLinearVelocity().y) < 0.1f && playerLeft)
+			else if (b2Abs(player->GetVelocity().x) < 0.1f && b2Abs(player->GetVelocity().y) < 0.1f && player->GetPlayerLeft())
 			{
 				//rotate
 				camera.SetRotating(true);
 				camera.ChangeCameraTarget(1);
-				player_body_->SetLinearVelocity(b2Vec2_zero);
+				player->SetVelocity(b2Vec2_zero);
 			}
 
 			else
 			{
-				
-				//player_body_->ApplyForceToCenter(b2Vec2((camera.GetCameraRight().x), (camera.GetCameraRight().y)), false);
-				//player_body_->SetLinearVelocity(b2Vec2((-3 * camera.GetCameraRight().x) + world_->GetGravity().x, (-3 * camera.GetCameraRight().y) + world_->GetGravity().y));
 				if (camera.GetCameraTarget() == 0 || camera.GetCameraTarget() == 2)
 				{
-					player_body_->SetLinearVelocity(b2Vec2(-3 * camera.GetCameraRight().x, player_body_->GetLinearVelocity().y));
+					player->SetVelocity(b2Vec2(-3 * camera.GetCameraRight().x, player->GetVelocity().y));
 				}
 				else
 				{
-					player_body_->SetLinearVelocity(b2Vec2(player_body_->GetLinearVelocity().x, -3 * camera.GetCameraRight().y));
+					player->SetVelocity(b2Vec2(player->GetVelocity().x, -3 * camera.GetCameraRight().y));
 				}
-				playerLeft = true;
+				player->SetPlayerLeft(true);
 			}
 
-			playerRight = false;
+			player->SetPlayerRight(false);
 
 		}
 		else
 		{
 			if (camera.GetCameraTarget() == 0 || camera.GetCameraTarget() == 2)
 			{
-				player_body_->SetLinearVelocity(b2Vec2(0.0f, player_body_->GetLinearVelocity().y));
+				player->SetVelocity(b2Vec2(0.0f, player->GetVelocity().y));
 			}
 			else
 			{
-				player_body_->SetLinearVelocity(b2Vec2(player_body_->GetLinearVelocity().x, 0.0f));
+				player->SetVelocity(b2Vec2(player->GetVelocity().x, 0.0f));
 			}
-			//player_body_->SetLinearVelocity(b2Vec2(player_body_->GetLinearVelocity().x, player_body_->GetLinearVelocity().y));
-			//player_body_->SetLinearVelocity(b2Vec2(world_->GetGravity().x, world_->GetGravity().y));
+			
+			
 			if (!camera.GetRotating())
 			{
-				playerLeft = false;
-				playerRight = false;
+				player->SetPlayerRight(false);
+				player->SetPlayerLeft(false);
 			}
 		}
 
@@ -500,8 +473,8 @@ void SceneApp::Render()
 	renderer_3d_->set_projection_matrix(projection_matrix);
 	
 	// view
-	gef::Vector4 camera_eye(player_body_->GetPosition().x, player_body_->GetPosition().y, 30.0f);
-	gef::Vector4 camera_lookat(player_body_->GetPosition().x, player_body_->GetPosition().y, 0.0f);
+	gef::Vector4 camera_eye(player->GetPosition().x, player->GetPosition().y, 30.0f);
+	gef::Vector4 camera_lookat(player->GetPosition().x, player->GetPosition().y, 0.0f);
 	
 	gef::Matrix44 view_matrix;
 	view_matrix.LookAt(camera_eye, camera_lookat, camera.GetCameraUp());
@@ -527,7 +500,7 @@ void SceneApp::Render()
 
 	// draw player
 	renderer_3d_->set_override_material(&primitive_builder_->red_material());
-	renderer_3d_->DrawMesh(player_);
+	renderer_3d_->DrawMesh(*player);
 	renderer_3d_->set_override_material(NULL);
 
 	//rendenemy
@@ -551,39 +524,7 @@ void SceneApp::Render()
 	sprite_renderer_->End();
 }
 
-void SceneApp::InitPlayer()
-{
-	// setup the mesh for the player
-	player_.set_mesh(primitive_builder_->GetDefaultCubeMesh());
 
-	// create a physics body for the player
-	b2BodyDef player_body_def;
-	player_body_def.type = b2_dynamicBody;
-	player_body_def.fixedRotation = true;
-	//player_body_def.position = levelBuilder->GetStartPosition();
-	player_body_def.position = b2Vec2(5, 5);
-
-	player_body_ = world_->CreateBody(&player_body_def);
-
-	// create the shape for the player
-	b2PolygonShape player_shape;
-	player_shape.SetAsBox(0.5f, 0.5f);
-
-	// create the fixture
-	b2FixtureDef player_fixture_def;
-	player_fixture_def.shape = &player_shape;
-	player_fixture_def.density = 1.0f;
-
-	// create the fixture on the rigid body
-	player_body_->CreateFixture(&player_fixture_def);
-
-	//set player gamebject type
-	player_.SetType(PLAYER);
-
-	// update visuals from simulation data
-	player_.UpdateFromSimulation(player_body_);
-
-}
 
 void SceneApp::InitGround()
 {

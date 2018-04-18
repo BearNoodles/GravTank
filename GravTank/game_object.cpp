@@ -34,12 +34,7 @@ void GameObject::UpdateFromSimulation(const b2Body* body)
 
 void GameObject::MyCollisionResponse()
 {
-	if (type_member == PLAYER)
-		gef::DebugOut("I am a Player\n");
-	else if (type_member == ENEMY)
-		gef::DebugOut("I am an Enemy\n");
-	else
-		gef::DebugOut("No type\n");
+	gef::DebugOut("No type\n");
 }
 
 void GameObject::SetType(ObjectType type)

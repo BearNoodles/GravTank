@@ -14,7 +14,7 @@ class GameObject : public gef::MeshInstance
 public:
 	GameObject();
 	void UpdateFromSimulation(const b2Body* body);
-	void MyCollisionResponse();
+	virtual void MyCollisionResponse();
 	void SetType(ObjectType type);
 	ObjectType GetType();
 

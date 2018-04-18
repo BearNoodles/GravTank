@@ -6,12 +6,18 @@
 class Bullet : public GameObject
 {
 public:
-	Bullet(b2Vec2 force, b2Vec2 pos, b2World* world, PrimitiveBuilder* builder);
+	Bullet(b2Vec2 pos, b2World* world, PrimitiveBuilder* builder);
 	~Bullet();
 	void CleanUp();
 
 	void Update();
 	b2Body* GetBody();
+
+	void MyCollisionResponse() override;
+
+	void Fire(b2Vec2 force, b2Vec2 pos, b2Vec2 offset);
+
+	void Reset(b2Vec2 pos);
 
 private:
 	void Init();

@@ -9,6 +9,7 @@ Enemy::Enemy(int type, b2World* world, PrimitiveBuilder* builder) :
 {
 	enemyType = type;
 	Init();
+	CreateBullet();
 	canShoot = true;
 }
 
@@ -19,7 +20,7 @@ void Enemy::Init()
 	else if (enemyType < 0)
 		enemyType = 0;
 	changeTimer = 0;
-	changeAt = 60;
+	changeAt = 160;
 	speed = 3.0f;
 	direction = 1;
 
@@ -52,6 +53,12 @@ void Enemy::Init()
 
 	// update visuals from simulation data
 	UpdateFromSimulation(m_body);
+}
+
+void Enemy::CreateBullet()
+{
+	bullet = new Bullet(m_body->GetPosition(), m_world, m_builder);
+	canShoot = true;
 }
 
 void Enemy::Update(b2Vec2 gravity)
@@ -94,56 +101,16 @@ void Enemy::Update(b2Vec2 gravity)
 	if (bullet != NULL)
 	{
 		bullet->Update();
-
-		b2Contact* contact = m_world->GetContactList();
-
-		int contact_count = m_world->GetContactCount();
-
-		if (bullet->GetBody()->GetContactList() != NULL)
+		if (bullet->GetBody()->IsAwake())
 		{
-
-		}
-		for (int contact_num = 0; contact_num < contact_count; ++contact_num)
-		{
-			if (contact->IsTouching())
+			m_body->SetLinearVelocity(b2Vec2_zero);
+			if (bullet->GetBody()->GetContactList() != NULL)
 			{
-				// get the colliding bodies
-				b2Body* bodyA = contact->GetFixtureA()->GetBody();
-				b2Body* bodyB = contact->GetFixtureB()->GetBody();
-
-				b2Body* bulletBody = NULL;
-
-
-				GameObject* gameObjectA = NULL;
-				GameObject* gameObjectB = NULL;
-
-				gameObjectA = (GameObject*)bodyA->GetUserData();
-				gameObjectB = (GameObject*)bodyB->GetUserData();
-
-				GameObject* bulletTemp = NULL;
-				GameObject* enemyTemp = NULL;
-
-				// figure which one is the player
-				if (gameObjectA != NULL && gameObjectA->GetType() == BULLET)
-				{ 
-					if (gameObjectB != NULL && gameObjectB->GetType() != BULLET&& gameObjectB->GetType() != ENEMY)
-					{
-						delete &bullet;
-						bullet = NULL;
-					}
-				}
-				else if (gameObjectB != NULL && gameObjectB->GetType() == BULLET)
-				{
-					if (gameObjectA != NULL && gameObjectA->GetType() != BULLET&& gameObjectA->GetType() != ENEMY)
-					{
-						delete &bullet;
-						bullet = NULL;
-					}
-				}
+				bullet->Reset(GetPosition());
+				canShoot = true;
 			}
 		}
 	}
-
 }
 
 gef::MeshInstance* Enemy::GetBulletMesh()
@@ -160,14 +127,14 @@ void Enemy::Shoot(b2Vec2 force)
 {
 	if (canShoot)
 	{
-		bullet = new Bullet(force, m_body->GetPosition(), m_world, m_builder);
+		bullet->Fire(b2Vec2(0, 100), m_body->GetPosition(), b2Vec2(0, 1.5f));
 		canShoot = false;
 	}
 }
 
-void Enemy::ReduceBulletCount()
+b2Vec2 Enemy::GetPosition()
 {
-	
+	return m_body->GetPosition();
 }
 
 

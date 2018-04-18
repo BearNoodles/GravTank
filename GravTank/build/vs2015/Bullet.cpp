@@ -2,32 +2,30 @@
 
 
 
-Bullet::Bullet(b2Vec2 force, b2Vec2 pos, b2World* world, PrimitiveBuilder* builder) :
+Bullet::Bullet(b2Vec2 pos, b2World* world, PrimitiveBuilder* builder) :
 	m_world(world),
 	m_builder(builder)
 {
-	
-	gef::Vector4 half_dimensions(0.2f, 0.2f, 0.5f);
 	// setup the mesh
-	mesh_ = m_builder->CreateBoxMesh(half_dimensions);
+	mesh_ = m_builder->CreateSphereMesh(0.2f, 10, 10);
 
 	// create a physics body
 	b2BodyDef body_def;
 	body_def.type = b2_dynamicBody;
 	body_def.fixedRotation = false;
 	body_def.position = pos;
-	body_def.userData = this;
 
 	m_body = m_world->CreateBody(&body_def);
 
 	// create the shape
-	b2PolygonShape shape;
-	shape.SetAsBox(half_dimensions.x(), half_dimensions.y());
+	b2CircleShape shape;
+	shape.m_p.SetZero();
+	shape.m_radius = 0.1f;
 
 	// create the fixture
 	b2FixtureDef fixture_def;
 	fixture_def.shape = &shape;
-	fixture_def.density = 1.0f;
+	fixture_def.density = 10.0f;
 
 	// create the fixture on the rigid body
 	m_body->CreateFixture(&fixture_def);
@@ -46,6 +44,15 @@ void Bullet::Update()
 	UpdateFromSimulation(m_body);
 }
 
+void Bullet::Fire(b2Vec2 force, b2Vec2 pos, b2Vec2 offset)
+{
+	m_body->SetTransform(pos + offset, m_body->GetAngle());
+	m_body->SetActive(true);
+
+	m_body->SetLinearVelocity(b2Vec2_zero);
+	m_body->ApplyForceToCenter(force, true);
+}
+
 void Bullet::Init()
 {
 	
@@ -54,6 +61,17 @@ void Bullet::Init()
 b2Body* Bullet::GetBody()
 {
 	return m_body;
+}
+
+
+void Bullet::Reset(b2Vec2 pos)
+{
+	m_body->SetActive(false);
+}
+
+void Bullet::MyCollisionResponse()
+{
+	
 }
 
 void Bullet::CleanUp()

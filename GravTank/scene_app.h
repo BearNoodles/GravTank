@@ -10,6 +10,7 @@
 #include "Camera.h"
 #include "LevelBuilder.h"
 #include "Enemy.h"
+#include "Player.h"
 
 // FRAMEWORK FORWARD DECLARATIONS
 namespace gef
@@ -54,7 +55,7 @@ private:
 	b2World* world_;
 
 	// player variables
-	GameObject player_;
+	Player* player;
 	b2Body* player_body_;
 	bool playerRight = true;
 	bool playerLeft = true;
