@@ -5,7 +5,7 @@
 class Player : public GameObject
 {
 public:
-	Player(b2World* world_, PrimitiveBuilder* builder);
+	Player(b2World* world_, PrimitiveBuilder* builder, b2Vec2 startPos);
 	~Player();
 
 	void Update();
@@ -13,6 +13,7 @@ public:
 	bool GetCanShoot();
 	gef::MeshInstance* GetBulletMesh();
 	b2Vec2 GetPosition();
+	void SetPosition(b2Vec2);
 	b2Vec2 GetVelocity();
 	void SetVelocity(b2Vec2 vel);
 	bool GetPlayerRight();
@@ -25,8 +26,8 @@ private:
 	void CreateBullet();
 	Bullet* bullet;
 	bool canShoot;
-	int direction;
 	float speed;
+	float bulletForce;
 
 	bool playerRight;
 	bool playerLeft;
@@ -34,5 +35,7 @@ private:
 	b2Body* m_body;
 	b2World* m_world;
 	PrimitiveBuilder* m_builder;
+
+	b2Vec2 startPosition;
 };
 

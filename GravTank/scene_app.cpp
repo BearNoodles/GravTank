@@ -17,7 +17,6 @@ SceneApp::SceneApp(gef::Platform& platform) :
 	primitive_builder_(NULL),
 	font_(NULL),
 	world_(NULL),
-	player_body_(NULL),
 	toDel(NULL)
 {
 }
@@ -146,10 +145,9 @@ void SceneApp::Init()
 	gravityAmount = 9.81f;
 	b2Vec2 gravity(0.0f, -gravityAmount);
 	world_ = new b2World(gravity);
-	levelBuilder = new LevelBuilder(world_, primitive_builder_);
-	levelBuilder->LoadLevel();
-	enemy = new Enemy(0, world_, primitive_builder_);
-	player = new Player(world_, primitive_builder_);
+	gameManager = new GameManager(world_, primitive_builder_);
+	gameManager->LoadLevel();
+	player = new Player(world_, primitive_builder_, gameManager->GetStartPosition());
 	InitGround();
 	InitBuildings();
 }
@@ -171,8 +169,8 @@ void SceneApp::CleanUp()
 
 	CleanUpFont();
 
-	delete levelBuilder;
-	levelBuilder = NULL;
+	delete gameManager;
+	gameManager = NULL;
 
 	delete primitive_builder_;
 	primitive_builder_ = NULL;
@@ -196,6 +194,24 @@ bool SceneApp::Update(float frame_time)
 		ProcessControllerInput();
 	}
 
+	switch (gameManager->GetState())
+	{
+		case LOADING:
+			break;
+		case MENU:
+			break;
+		case PLAYING:
+			UpdatePlaying();
+			break;
+	}
+
+	
+
+	return true;
+}
+
+void SceneApp::UpdatePlaying()
+{
 	// update physics world
 	float32 timeStep = 1.0f / 60.0f;
 
@@ -207,7 +223,7 @@ bool SceneApp::Update(float frame_time)
 	// update object visuals from simulation data
 	player->Update();
 
-	enemy->Update(world_->GetGravity());
+	gameManager->Update(world_->GetGravity());
 
 	// don't have to update the ground visuals as it is static
 
@@ -242,7 +258,7 @@ bool SceneApp::Update(float frame_time)
 			GameObject* enemyTemp = NULL;
 			GameObject* bulletTemp = NULL;
 
-			
+
 
 			// figure which one is the player
 			if (gameObjectA != NULL && gameObjectA->GetType() == PLAYER)
@@ -292,8 +308,6 @@ bool SceneApp::Update(float frame_time)
 		// Get next contact point
 		contact = contact->GetNext();
 	}
-
-	return true;
 }
 
 void SceneApp::ProcessControllerInput()
@@ -454,7 +468,17 @@ void SceneApp::ProcessKeyboardInput()
 
 		if (keyboard->IsKeyDown(gef::Keyboard::KC_SPACE))
 		{
-			enemy->Shoot(b2Vec2(0, 100));
+			player->Shoot(b2Vec2(0, 100));
+		}
+		if (keyboard->IsKeyDown(gef::Keyboard::KC_P))
+		{
+			if (gameManager->GetState() == PLAYING)
+			{
+				//gameManager->SetState(LOADING);
+				gameManager->NextLevel();
+				gameManager->LoadLevel();
+				player->SetPosition(gameManager->GetStartPosition());
+			}
 		}
 	}
 }
@@ -494,7 +518,7 @@ void SceneApp::Render()
 	{
 		for (int j = 0; j < levelHeight; j++)
 		{
-			renderer_3d_->DrawMesh(levelBuilder->GetBlock(i, j));
+			renderer_3d_->DrawMesh(gameManager->GetBlock(i, j));
 		}
 	}
 
@@ -505,14 +529,25 @@ void SceneApp::Render()
 
 	//rendenemy
 	renderer_3d_->set_override_material(&primitive_builder_->blue_material());
-	renderer_3d_->DrawMesh(*enemy);
+	for (int i = 0; i < 10; i++)
+	{
+		renderer_3d_->DrawMesh(*gameManager->GetEnemy(i));
+	}
 	renderer_3d_->set_override_material(NULL);
 
 	//
 	renderer_3d_->set_override_material(&primitive_builder_->red_material());
-	if (!enemy->GetCanShoot())
+	for (int i = 0; i < 10; i++)
 	{
-		renderer_3d_->DrawMesh(*enemy->GetBulletMesh());
+		if (!gameManager->GetEnemy(i)->GetCanShoot())
+		{
+			renderer_3d_->DrawMesh(*gameManager->GetEnemy(i)->GetBulletMesh());
+		}
+	}
+
+	if (!player->GetCanShoot())
+	{
+		renderer_3d_->DrawMesh(*player->GetBulletMesh());
 	}
 	renderer_3d_->set_override_material(NULL);
 

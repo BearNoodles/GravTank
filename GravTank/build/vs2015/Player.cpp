@@ -2,11 +2,12 @@
 
 
 
-Player::Player(b2World* world, PrimitiveBuilder* builder) :
+Player::Player(b2World* world, PrimitiveBuilder* builder, b2Vec2 startPos) :
 	m_world(world),
 	m_builder(builder),
 	bullet(NULL)
 {
+	startPosition = startPos;
 	Init();
 	CreateBullet();
 	canShoot = true;
@@ -17,7 +18,6 @@ Player::Player(b2World* world, PrimitiveBuilder* builder) :
 void Player::Init()
 {
 	speed = 3.0f;
-	direction = 1;
 
 	// setup the mesh for the player
 	set_mesh(m_builder ->GetDefaultCubeMesh());
@@ -27,7 +27,7 @@ void Player::Init()
 	player_body_def.type = b2_dynamicBody;
 	player_body_def.fixedRotation = true;
 	//player_body_def.position = levelBuilder->GetStartPosition();
-	player_body_def.position = b2Vec2(5, 5);
+	player_body_def.position = startPosition;
 
 	m_body = m_world->CreateBody(&player_body_def);
 
@@ -58,20 +58,20 @@ void Player::CreateBullet()
 
 void Player::Update()
 {
-	
 	UpdateFromSimulation(m_body);
 
-	if (bullet != NULL)
+	if (bullet != NULL && !canShoot)
 	{
-		bullet->Update();
 		if (bullet->GetBody()->IsAwake())
 		{
-			m_body->SetLinearVelocity(b2Vec2_zero);
 			if (bullet->GetBody()->GetContactList() != NULL)
 			{
 				bullet->Reset(GetPosition());
 				canShoot = true;
 			}
+
+
+			bullet->Update();
 		}
 	}
 }
@@ -90,7 +90,7 @@ void Player::Shoot(b2Vec2 force)
 {
 	if (canShoot)
 	{
-		bullet->Fire(b2Vec2(0, 100), m_body->GetPosition(), b2Vec2(0, 1.5f));
+		bullet->Fire(force, m_body->GetPosition(), b2Vec2(0, 1.5f));
 		canShoot = false;
 	}
 }
@@ -98,6 +98,11 @@ void Player::Shoot(b2Vec2 force)
 b2Vec2 Player::GetPosition()
 {
 	return m_body->GetPosition();
+}
+
+void Player::SetPosition(b2Vec2 pos)
+{
+	m_body->SetTransform(pos, m_body->GetAngle());
 }
 
 b2Vec2 Player::GetVelocity()

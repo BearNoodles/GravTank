@@ -2,7 +2,7 @@
 
 
 
-Enemy::Enemy(int type, b2World* world, PrimitiveBuilder* builder) :
+Enemy::Enemy(int type, b2World* world, PrimitiveBuilder* builder, b2Vec2 start) :
 	m_world(world),
 	m_builder(builder),
 	bullet(NULL)
@@ -11,6 +11,7 @@ Enemy::Enemy(int type, b2World* world, PrimitiveBuilder* builder) :
 	Init();
 	CreateBullet();
 	canShoot = true;
+	startPosition = start;
 }
 
 void Enemy::Init()
@@ -31,7 +32,7 @@ void Enemy::Init()
 	b2BodyDef enemy_body_def;
 	enemy_body_def.type = b2_dynamicBody;
 	enemy_body_def.fixedRotation = false;
-	enemy_body_def.position = b2Vec2(10, 6);
+	enemy_body_def.position = startPosition;
 
 	m_body = m_world->CreateBody(&enemy_body_def);
 
@@ -98,17 +99,16 @@ void Enemy::Update(b2Vec2 gravity)
 	UpdateFromSimulation(m_body);
 
 
-	if (bullet != NULL)
+	if (bullet != NULL && !canShoot)
 	{
-		bullet->Update();
 		if (bullet->GetBody()->IsAwake())
 		{
-			m_body->SetLinearVelocity(b2Vec2_zero);
 			if (bullet->GetBody()->GetContactList() != NULL)
 			{
 				bullet->Reset(GetPosition());
 				canShoot = true;
 			}
+			bullet->Update();
 		}
 	}
 }
@@ -127,8 +127,8 @@ void Enemy::Shoot(b2Vec2 force)
 {
 	if (canShoot)
 	{
-		bullet->Fire(b2Vec2(0, 100), m_body->GetPosition(), b2Vec2(0, 1.5f));
 		canShoot = false;
+		bullet->Fire(force, m_body->GetPosition(), b2Vec2(0, 1.5f));
 	}
 }
 

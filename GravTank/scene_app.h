@@ -8,7 +8,7 @@
 #include <box2d/Box2D.h>
 #include "game_object.h"
 #include "Camera.h"
-#include "LevelBuilder.h"
+#include "GameManager.h"
 #include "Enemy.h"
 #include "Player.h"
 
@@ -29,6 +29,7 @@ public:
 	void Init();
 	void CleanUp();
 	bool Update(float frame_time);
+	void UpdatePlaying();
 	void Render();
 private:
 	void InitPlayer();
@@ -56,12 +57,6 @@ private:
 
 	// player variables
 	Player* player;
-	b2Body* player_body_;
-	bool playerRight = true;
-	bool playerLeft = true;
-
-	//1st enemy
-	Enemy* enemy;
 
 	// ground variables
 	gef::Mesh* ground_mesh_;
@@ -69,7 +64,7 @@ private:
 	b2Body* ground_body_;
 
 	//levelBuild 
-	LevelBuilder* levelBuilder;
+	GameManager* gameManager;
 	int levelWidth = 15;
 	int levelHeight = 15;
 

@@ -7,7 +7,7 @@
 class Enemy : public GameObject
 {
 public:
-	Enemy(int type, b2World* world_, PrimitiveBuilder* builder);
+	Enemy(int type, b2World* world_, PrimitiveBuilder* builder, b2Vec2 startPosition);
 	~Enemy();
 	void Update(b2Vec2 gravity);
 	void Shoot(b2Vec2 force);
@@ -20,11 +20,15 @@ private:
 	void CreateBullet();
 	Bullet* bullet;
 	bool canShoot;
+
+	float bulletForce;
 	int changeTimer;
 	int changeAt;
 	int direction;
 	float speed;
 	int enemyType;
+
+	b2Vec2 startPosition;
 
 	b2Body* m_body;
 	b2World* m_world;

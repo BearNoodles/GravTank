@@ -7,7 +7,7 @@ Bullet::Bullet(b2Vec2 pos, b2World* world, PrimitiveBuilder* builder) :
 	m_builder(builder)
 {
 	// setup the mesh
-	mesh_ = m_builder->CreateSphereMesh(0.2f, 10, 10);
+	set_mesh(m_builder->CreateSphereMesh(0.2f, 10, 10));
 
 	// create a physics body
 	b2BodyDef body_def;
@@ -32,8 +32,6 @@ Bullet::Bullet(b2Vec2 pos, b2World* world, PrimitiveBuilder* builder) :
 
 	//set player gamebject type
 	SetType(BULLET);
-
-	m_body->ApplyForceToCenter(force, true);
 
 	// update visuals from simulation data
 	UpdateFromSimulation(m_body);
@@ -66,6 +64,7 @@ b2Body* Bullet::GetBody()
 
 void Bullet::Reset(b2Vec2 pos)
 {
+	
 	m_body->SetActive(false);
 }
 
