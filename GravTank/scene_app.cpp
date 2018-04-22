@@ -475,7 +475,18 @@ void SceneApp::ProcessKeyboardInput()
 			if (gameManager->GetState() == PLAYING)
 			{
 				//gameManager->SetState(LOADING);
+				gameManager->Reset();
 				gameManager->NextLevel();
+				gameManager->LoadLevel();
+				player->SetPosition(gameManager->GetStartPosition());
+			}
+		}
+		if (keyboard->IsKeyDown(gef::Keyboard::KC_R))
+		{
+			if (gameManager->GetState() == PLAYING)
+			{
+				//gameManager->SetState(LOADING);
+				gameManager->Reset();
 				gameManager->LoadLevel();
 				player->SetPosition(gameManager->GetStartPosition());
 			}
@@ -529,7 +540,7 @@ void SceneApp::Render()
 
 	//rendenemy
 	renderer_3d_->set_override_material(&primitive_builder_->blue_material());
-	for (int i = 0; i < 10; i++)
+	for (int i = 0; i < gameManager->GetEnemyCount(); i++)
 	{
 		renderer_3d_->DrawMesh(*gameManager->GetEnemy(i));
 	}
@@ -537,7 +548,7 @@ void SceneApp::Render()
 
 	//
 	renderer_3d_->set_override_material(&primitive_builder_->red_material());
-	for (int i = 0; i < 10; i++)
+	for (int i = 0; i < gameManager->GetEnemyCount(); i++)
 	{
 		if (!gameManager->GetEnemy(i)->GetCanShoot())
 		{

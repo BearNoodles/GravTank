@@ -90,15 +90,43 @@ void GameManager::LoadLevel()
 				case 2:
 					levelBlocks[i][j].blockBody = NULL;
 					levelBlocks[i][j].blockMesh = NULL;
+					
 					StartPosition = b2Vec2((4 * i), (4 * j));
 					break;
 
 				case 3:
+					levelBlocks[i][j].blockBody = NULL;
+					levelBlocks[i][j].blockMesh = NULL;
 					enemies[enemyCount] = new Enemy(0, m_world, m_builder, b2Vec2((4 * i), (4 * j)));
+					enemyCount++;
 					break;
 			}
 		}
 	}
+}
+
+void GameManager::Reset()
+{
+	for (int i = 0; i < width; i++)
+	{
+		for (int j = 0; j < height; j++)
+		{
+			if (levelBlocks[i][j].blockBody != NULL)
+			{
+				delete levelBlocks[i][j].blockMesh;
+				levelBlocks[i][j].blockMesh = NULL;
+				m_world->DestroyBody(levelBlocks[i][j].blockBody);
+				levelBlocks[i][j].blockBody = NULL;
+			}
+		}
+	}
+	for (int i = 0; i < enemyCount; i++)
+	{
+		delete enemies[i];
+		enemies[i] = NULL;
+	}
+	enemyCount = 0;;
+
 }
 
 void GameManager::Update(b2Vec2 gravity)
@@ -117,6 +145,11 @@ GameObject GameManager::GetBlock(int i, int j)
 Enemy* GameManager::GetEnemy(int i)
 {
 	return enemies[i];
+}
+
+int GameManager::GetEnemyCount()
+{
+	return enemyCount;
 }
 
 gef::MeshInstance* GameManager::GetEnemyMesh(int i)

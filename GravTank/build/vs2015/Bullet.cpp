@@ -35,6 +35,8 @@ Bullet::Bullet(b2Vec2 pos, b2World* world, PrimitiveBuilder* builder) :
 
 	// update visuals from simulation data
 	UpdateFromSimulation(m_body);
+
+	Reset(pos);
 }
 
 void Bullet::Update()
@@ -84,5 +86,9 @@ void Bullet::CleanUp()
 
 Bullet::~Bullet()
 {
+	m_world->DestroyBody(m_body);
+	m_body = NULL;
+	delete mesh_;
+	mesh_ = NULL;
 	CleanUp();
 }

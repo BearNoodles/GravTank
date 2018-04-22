@@ -8,10 +8,10 @@ Enemy::Enemy(int type, b2World* world, PrimitiveBuilder* builder, b2Vec2 start) 
 	bullet(NULL)
 {
 	enemyType = type;
+	startPosition = start;
 	Init();
 	CreateBullet();
 	canShoot = true;
-	startPosition = start;
 }
 
 void Enemy::Init()
@@ -140,4 +140,8 @@ b2Vec2 Enemy::GetPosition()
 
 Enemy::~Enemy()
 {
+	m_world->DestroyBody(m_body);
+	m_body = NULL;
+	delete mesh_;
+	mesh_ = NULL;
 }
