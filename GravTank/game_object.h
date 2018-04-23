@@ -17,6 +17,7 @@ public:
 	virtual void MyCollisionResponse();
 	void SetType(ObjectType type);
 	ObjectType GetType();
+	void Die();
 
 private:
 	ObjectType type_member;

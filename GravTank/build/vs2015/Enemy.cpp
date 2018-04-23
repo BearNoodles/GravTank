@@ -35,6 +35,7 @@ void Enemy::Init()
 	enemy_body_def.position = startPosition;
 
 	m_body = m_world->CreateBody(&enemy_body_def);
+	m_body->SetUserData(this);
 
 	// create the shape for the player
 	b2CircleShape enemy_shape;
@@ -56,6 +57,11 @@ void Enemy::Init()
 	UpdateFromSimulation(m_body);
 }
 
+void Enemy::Die()
+{
+	m_body->SetActive(false);
+}
+
 void Enemy::CreateBullet()
 {
 	bullet = new Bullet(m_body->GetPosition(), m_world, m_builder);
@@ -64,6 +70,10 @@ void Enemy::CreateBullet()
 
 void Enemy::Update(b2Vec2 gravity)
 {
+	if (!m_body->IsActive())
+	{
+		return;
+	}
 	//do with fps
 	changeTimer++;
 	if (changeTimer >= changeAt)
@@ -105,13 +115,13 @@ void Enemy::Update(b2Vec2 gravity)
 		{
 			if (bullet->GetBody()->GetContactList() != NULL)
 			{
-				bullet->Reset(GetPosition());
 				canShoot = true;
 			}
 			bullet->Update();
 		}
 	}
 }
+
 
 gef::MeshInstance* Enemy::GetBulletMesh()
 {

@@ -16,6 +16,7 @@ Bullet::Bullet(b2Vec2 pos, b2World* world, PrimitiveBuilder* builder) :
 	body_def.position = pos;
 
 	m_body = m_world->CreateBody(&body_def);
+	m_body->SetUserData((GameObject*)this);
 
 	// create the shape
 	b2CircleShape shape;
@@ -36,7 +37,7 @@ Bullet::Bullet(b2Vec2 pos, b2World* world, PrimitiveBuilder* builder) :
 	// update visuals from simulation data
 	UpdateFromSimulation(m_body);
 
-	Reset(pos);
+	m_body->SetActive(false);
 }
 
 void Bullet::Update()
@@ -64,10 +65,9 @@ b2Body* Bullet::GetBody()
 }
 
 
-void Bullet::Reset(b2Vec2 pos)
+void Bullet::Reset()
 {
-	
-	m_body->SetActive(false);
+	//m_body->SetActive(false);
 }
 
 void Bullet::MyCollisionResponse()

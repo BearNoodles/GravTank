@@ -14,6 +14,8 @@ public:
 	bool GetCanShoot();
 	gef::MeshInstance* GetBulletMesh();
 	b2Vec2 GetPosition();
+	void BulletCollision();
+	void Die();
 
 private:
 	void Init();

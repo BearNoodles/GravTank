@@ -193,8 +193,8 @@ bool SceneApp::Update(float frame_time)
 	{
 		input_manager_->Update();
 
-		//ProcessKeyboardInput();
-		ProcessControllerInput();
+		ProcessKeyboardInput();
+		//ProcessControllerInput();
 	}
 
 	switch (gameManager->GetState())
@@ -269,15 +269,15 @@ void SceneApp::UpdatePlaying()
 				playerTemp = gameObjectA;
 				playerBody = bodyA;
 			}
-			else if (gameObjectA != NULL && gameObjectA->GetType() == ENEMY)
-			{
-				enemyTemp = gameObjectA;
-				enemyBody = bodyA;
-			}
 			else if (gameObjectA != NULL && gameObjectA->GetType() == BULLET)
 			{
 				bulletTemp = gameObjectA;
 				bulletBody = bodyA;
+			}
+			else if (gameObjectA != NULL && gameObjectA->GetType() == ENEMY)
+			{
+				enemyTemp = gameObjectA;
+				enemyBody = bodyA;
 			}
 
 			if (gameObjectB != NULL && gameObjectB->GetType() == PLAYER)
@@ -285,25 +285,35 @@ void SceneApp::UpdatePlaying()
 				playerTemp = gameObjectB;
 				playerBody = bodyB;
 			}
-			else if (gameObjectB != NULL && gameObjectB->GetType() == ENEMY)
-			{
-				enemyTemp = gameObjectB;
-				enemyBody = bodyB;
-			}
 			else if (gameObjectB != NULL && gameObjectB->GetType() == BULLET)
 			{
 				bulletTemp = gameObjectB;
 				bulletBody = bodyB;
 			}
-
-			if (playerTemp)
+			else if (gameObjectB != NULL && gameObjectB->GetType() == BULLET)
 			{
-				playerTemp->MyCollisionResponse();
-				//playerBody->ApplyForceToCenter(b2Vec2(100.0f, 200.0f), true);
+				enemyTemp = gameObjectB;
+				enemyBody = bodyB;
 			}
-			if (enemyTemp)
+
+			if (playerTemp && bulletTemp)
 			{
-				enemyTemp->MyCollisionResponse();
+				gameManager->Reset();
+				gameManager->LoadLevel();
+				player->SetPosition(gameManager->GetStartPosition());
+				bulletBody->SetActive(false);
+				break;
+			}
+			else if (enemyTemp && bulletTemp)
+			{
+				enemyBody->SetActive(false);
+				bulletBody->SetActive(false);
+				break;
+			}
+			else if (bulletTemp)
+			{
+				bulletBody->SetActive(false);
+				break;
 			}
 
 		}

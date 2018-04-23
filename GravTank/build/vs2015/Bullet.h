@@ -17,7 +17,7 @@ public:
 
 	void Fire(b2Vec2 force, b2Vec2 pos, b2Vec2 offset);
 
-	void Reset(b2Vec2 pos);
+	void Reset();
 
 private:
 	void Init();
