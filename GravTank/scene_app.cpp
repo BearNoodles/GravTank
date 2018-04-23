@@ -180,6 +180,9 @@ void SceneApp::CleanUp()
 
 	delete sprite_renderer_;
 	sprite_renderer_ = NULL;
+
+	delete player;
+	player = NULL;
 }
 
 bool SceneApp::Update(float frame_time)
@@ -190,7 +193,7 @@ bool SceneApp::Update(float frame_time)
 	{
 		input_manager_->Update();
 
-		ProcessKeyboardInput();
+		//ProcessKeyboardInput();
 		ProcessControllerInput();
 	}
 
@@ -328,11 +331,118 @@ void SceneApp::ProcessControllerInput()
 			if (controller->buttons_pressed() & gef_SONY_CTRL_CIRCLE)
 				gef::DebugOut("CIRCLE pressed\n");
 
-			// print out some debug text when left stick is moved
-			if (controller->left_stick_x_axis() != 0.0f)
-				gef::DebugOut("left_stick_x_axis: %f\n", controller->left_stick_x_axis());
-			if (controller->left_stick_y_axis() != 0.0f)
-				gef::DebugOut("left_stick_y_axis: %f\n", controller->left_stick_y_axis());
+			if (controller->left_stick_x_axis() >= 0.3f)
+			{
+				if (camera.GetRotating())
+				{
+					player->SetPlayerRight(true);
+					if (player->GetPlayerLeft())
+					{
+						camera.ChangeCameraTarget(-1);
+						player->SetPlayerLeft(false);
+					}
+					if (camera.CameraTargetReached())
+					{
+						camera.SetRotating(false);
+						player->SetPlayerRight(false);
+					}
+					else
+					{
+						camera.RotateCam(-1);
+						world_->SetGravity(b2Vec2(-gravityAmount * camera.GetCameraUp().x(), -gravityAmount * camera.GetCameraUp().y()));
+					}
+				}
+				else if (b2Abs(player->GetVelocity().x) < 0.1f && b2Abs(player->GetVelocity().y) < 0.1f && player->GetPlayerRight())
+				{
+					//rotate
+					camera.SetRotating(true);
+					camera.ChangeCameraTarget(-1);
+					player->SetVelocity(b2Vec2_zero);
+				}
+
+				else
+				{
+					if (camera.GetCameraTarget() == 0 || camera.GetCameraTarget() == 2)
+					{
+						player->SetVelocity(b2Vec2(3 * camera.GetCameraRight().x, player->GetVelocity().y));
+					}
+					else
+					{
+						player->SetVelocity(b2Vec2(player->GetVelocity().x, 3 * camera.GetCameraRight().y));
+					}
+
+					player->SetPlayerRight(true);
+				}
+
+				player->SetPlayerLeft(false);
+
+			}
+
+			else if (controller->left_stick_x_axis() <= 0.3f)
+			{
+				if (camera.GetRotating())
+				{
+					player->SetPlayerLeft(true);
+					if (player->GetPlayerRight())
+					{
+						camera.ChangeCameraTarget(1);
+						player->SetPlayerRight(false);
+					}
+					if (camera.CameraTargetReached())
+					{
+						camera.SetRotating(false);
+						player->SetPlayerLeft(false);
+					}
+					else
+					{
+						camera.RotateCam(1);
+						world_->SetGravity(b2Vec2(-gravityAmount * camera.GetCameraUp().x(), -gravityAmount * camera.GetCameraUp().y()));
+					}
+				}
+				else if (b2Abs(player->GetVelocity().x) < 0.1f && b2Abs(player->GetVelocity().y) < 0.1f && player->GetPlayerLeft())
+				{
+					//rotate
+					camera.SetRotating(true);
+					camera.ChangeCameraTarget(1);
+					player->SetVelocity(b2Vec2_zero);
+				}
+
+				else
+				{
+					if (camera.GetCameraTarget() == 0 || camera.GetCameraTarget() == 2)
+					{
+						player->SetVelocity(b2Vec2(-3 * camera.GetCameraRight().x, player->GetVelocity().y));
+					}
+					else
+					{
+						player->SetVelocity(b2Vec2(player->GetVelocity().x, -3 * camera.GetCameraRight().y));
+					}
+					player->SetPlayerLeft(true);
+				}
+
+				player->SetPlayerRight(false);
+
+			}
+
+			else
+			{
+				if (camera.GetCameraTarget() == 0 || camera.GetCameraTarget() == 2)
+				{
+					player->SetVelocity(b2Vec2(0.0f, player->GetVelocity().y));
+				}
+				else
+				{
+					player->SetVelocity(b2Vec2(player->GetVelocity().x, 0.0f));
+				}
+
+
+				if (!camera.GetRotating())
+				{
+					player->SetPlayerRight(false);
+					player->SetPlayerLeft(false);
+				}
+			}
+
 
 			// print out some debug text when left stick is moved
 			if (controller->right_stick_x_axis() != 0.0f)
