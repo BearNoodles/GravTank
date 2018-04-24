@@ -7,6 +7,7 @@
 GameObject::GameObject()
 {
 	SetType(NONE);
+	SetBulletType(NOBULLET);
 }
 //
 // UpdateFromSimulation
@@ -48,5 +49,15 @@ ObjectType GameObject::GetType()
 		return type_member;
 	else
 		return NONE;
+}
+
+void GameObject::SetBulletType(BulletType value)
+{
+	bulletType = value;
+}
+
+BulletType GameObject::GetBulletType()
+{
+	return bulletType;
 }
 

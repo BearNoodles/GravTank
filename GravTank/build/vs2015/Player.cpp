@@ -85,6 +85,10 @@ void Player::Update()
 {
 	UpdateFromSimulation(m_body);
 	bullet->Update();
+	if (!bullet->GetBody()->IsActive())
+	{
+		canShoot = true;
+	}
 
 	//if (bullet != NULL && !canShoot)
 	//{

@@ -9,6 +9,11 @@ enum ObjectType
 	NONE, PLAYER, ENEMY, BULLET, TILE
 };
 
+enum BulletType
+{
+	NOBULLET, PLAYERBULLET, ENEMYBULLET
+};
+
 class GameObject : public gef::MeshInstance
 {
 public:
@@ -19,8 +24,13 @@ public:
 	ObjectType GetType();
 	void Die();
 
+	
+	BulletType GetBulletType();
+	void SetBulletType(BulletType value);
+
 private:
 	ObjectType type_member;
+	BulletType bulletType;
 };
 
 #endif // _GAME_OBJECT_H

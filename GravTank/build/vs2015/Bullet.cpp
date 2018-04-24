@@ -6,6 +6,7 @@ Bullet::Bullet(b2Vec2 pos, b2World* world, PrimitiveBuilder* builder) :
 	m_world(world),
 	m_builder(builder)
 {
+	SetBulletType(NOBULLET);
 	// setup the mesh
 	set_mesh(m_builder->CreateSphereMesh(0.2f, 10, 10));
 
@@ -42,7 +43,10 @@ Bullet::Bullet(b2Vec2 pos, b2World* world, PrimitiveBuilder* builder) :
 
 void Bullet::Update()
 {
-	UpdateFromSimulation(m_body);
+	if (m_body->IsActive())
+	{
+		UpdateFromSimulation(m_body);
+	}
 }
 
 void Bullet::Fire(b2Vec2 force, b2Vec2 pos, b2Vec2 offset)
@@ -59,10 +63,6 @@ void Bullet::Init()
 	
 }
 
-void Bullet::SetBulletType(BulletType value)
-{
-	type = value;
-}
 
 b2Body* Bullet::GetBody()
 {

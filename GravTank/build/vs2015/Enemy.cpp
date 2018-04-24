@@ -91,6 +91,7 @@ void Enemy::Update(b2Vec2 gravity)
 		changeTimer = 0;
 		direction *= -1;
 		m_body->ApplyForceToCenter(b2Vec2(0, 500), true);
+		Shoot(b2Vec2(0, 150));
 	}
 	switch (enemyType)
 	{
@@ -138,17 +139,10 @@ void Enemy::Update(b2Vec2 gravity)
 
 	UpdateFromSimulation(m_body);
 
-
-	if (bullet != NULL && !canShoot)
+	bullet->Update();
+	if (!bullet->GetBody()->IsActive())
 	{
-		if (bullet->GetBody()->IsActive())
-		{
-			if (bullet->GetBody()->GetContactList() != NULL)
-			{
-				canShoot = true;
-			}
-			bullet->Update();
-		}
+		canShoot = true;
 	}
 }
 

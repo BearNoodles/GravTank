@@ -314,25 +314,36 @@ void SceneApp::UpdatePlaying()
 
 			if (playerTemp && bulletTemp)
 			{
-				player->ReduceHealth();
-				bulletBody->SetActive(false);
-				
-				if (player->GetHealth() <= 0)
+				if (bulletTemp->GetBulletType() == ENEMYBULLET)
 				{
+					player->ReduceHealth();
 					bulletBody->SetActive(false);
-					player->SetHealth(player->GetMaxHealth());
-					gameManager->Reset();
-					gameManager->LoadLevel();
-					player->SetPosition(gameManager->GetStartPosition());
-					break;
+
+					if (player->GetHealth() <= 0)
+					{
+						bulletBody->SetActive(false);
+						player->SetHealth(player->GetMaxHealth());
+						gameManager->Reset();
+						gameManager->LoadLevel();
+						player->SetPosition(gameManager->GetStartPosition());
+					}
+				}
+				else
+				{
+					player->SetCanShoot(true);
+					bulletBody->SetActive(false);
 				}
 				break;
 			}
 			else if (enemyTemp && bulletTemp)
 			{
-				enemyBody->SetActive(false);
-				bulletBody->SetActive(false);
-				break;
+				if (bulletTemp->GetBulletType() == PLAYERBULLET)
+				{
+					
+					enemyBody->SetActive(false);
+					bulletBody->SetActive(false);
+					break;
+				}
 			}
 			else if (bulletTemp && tileTemp)
 			{
