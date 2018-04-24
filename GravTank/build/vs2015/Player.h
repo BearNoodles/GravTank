@@ -11,6 +11,7 @@ public:
 	void Update();
 	void Shoot(b2Vec2 force);
 	bool GetCanShoot();
+	void SetCanShoot(bool value);
 	gef::MeshInstance* GetBulletMesh();
 	b2Vec2 GetPosition();
 	void SetPosition(b2Vec2);
@@ -20,9 +21,15 @@ public:
 	bool GetPlayerLeft();
 	void SetPlayerRight(bool value);
 	void SetPlayerLeft(bool value);
+	int GetHealth();
+	int GetMaxHealth();
+	void SetHealth(int value);
+	void ReduceHealth();
 
 private:
 	void Init();
+	int health;
+	int maxHealth;
 	void CreateBullet();
 	Bullet* bullet;
 	bool canShoot;

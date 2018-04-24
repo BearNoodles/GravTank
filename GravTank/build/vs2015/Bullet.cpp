@@ -59,6 +59,11 @@ void Bullet::Init()
 	
 }
 
+void Bullet::SetBulletType(BulletType value)
+{
+	type = value;
+}
+
 b2Body* Bullet::GetBody()
 {
 	return m_body;
@@ -67,7 +72,7 @@ b2Body* Bullet::GetBody()
 
 void Bullet::Reset()
 {
-	//m_body->SetActive(false);
+	m_body->SetActive(false);
 }
 
 void Bullet::MyCollisionResponse()

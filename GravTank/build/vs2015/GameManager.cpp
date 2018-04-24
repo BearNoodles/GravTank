@@ -85,6 +85,9 @@ void GameManager::LoadLevel()
 
 					// update visuals from simulation data
 					levelBlocks[i][j].blockObject.UpdateFromSimulation(levelBlocks[i][j].blockBody);
+
+					levelBlocks[i][j].blockObject.SetType(TILE);
+
 					break;
 
 				case 2:
@@ -97,7 +100,28 @@ void GameManager::LoadLevel()
 				case 3:
 					levelBlocks[i][j].blockBody = NULL;
 					levelBlocks[i][j].blockMesh = NULL;
-					enemies[enemyCount] = new Enemy(0, m_world, m_builder, b2Vec2((4 * i), (4 * j)));
+					enemies[enemyCount] = new Enemy(3, m_world, m_builder, b2Vec2((4 * i), (4 * j)));
+					enemyCount++;
+					break;
+
+				case 4:
+					levelBlocks[i][j].blockBody = NULL;
+					levelBlocks[i][j].blockMesh = NULL;
+					enemies[enemyCount] = new Enemy(4, m_world, m_builder, b2Vec2((4 * i), (4 * j)));
+					enemyCount++;
+					break;
+
+				case 5:
+					levelBlocks[i][j].blockBody = NULL;
+					levelBlocks[i][j].blockMesh = NULL;
+					enemies[enemyCount] = new Enemy(5, m_world, m_builder, b2Vec2((4 * i), (4 * j)));
+					enemyCount++;
+					break;
+
+				case 6:
+					levelBlocks[i][j].blockBody = NULL;
+					levelBlocks[i][j].blockMesh = NULL;
+					enemies[enemyCount] = new Enemy(6, m_world, m_builder, b2Vec2((4 * i), (4 * j)));
 					enemyCount++;
 					break;
 			}
@@ -135,6 +159,11 @@ void GameManager::Update(b2Vec2 gravity)
 	{
 		enemies[i]->Update(gravity);
 	}
+}
+
+void GameManager::ReduceEnemyCount()
+{
+	enemyCount--;
 }
 
 GameObject GameManager::GetBlock(int i, int j)

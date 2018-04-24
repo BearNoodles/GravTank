@@ -12,14 +12,15 @@ Enemy::Enemy(int type, b2World* world, PrimitiveBuilder* builder, b2Vec2 start) 
 	Init();
 	CreateBullet();
 	canShoot = true;
+	isDead = false;
 }
 
 void Enemy::Init()
 {
-	if (enemyType > 3)
+	if (enemyType > 6)
+		enemyType = 6;
+	else if (enemyType < 3)
 		enemyType = 3;
-	else if (enemyType < 0)
-		enemyType = 0;
 	changeTimer = 0;
 	changeAt = 160;
 	speed = 3.0f;
@@ -60,11 +61,18 @@ void Enemy::Init()
 void Enemy::Die()
 {
 	m_body->SetActive(false);
+	isDead = true;
+}
+
+bool Enemy::GetDead()
+{
+	return isDead;
 }
 
 void Enemy::CreateBullet()
 {
 	bullet = new Bullet(m_body->GetPosition(), m_world, m_builder);
+	bullet->SetBulletType(ENEMYBULLET);
 	canShoot = true;
 }
 
@@ -72,6 +80,8 @@ void Enemy::Update(b2Vec2 gravity)
 {
 	if (!m_body->IsActive())
 	{
+		if (!isDead)
+			isDead = true;
 		return;
 	}
 	//do with fps
@@ -84,7 +94,7 @@ void Enemy::Update(b2Vec2 gravity)
 	}
 	switch (enemyType)
 	{
-		case 0:
+		case 3:
 			if (gravity.y > 0)
 				m_body->ApplyForceToCenter(b2Vec2(0, -2 * gravity.y * m_body->GetMass()), true);
 			else if (gravity.y == 0)
@@ -92,16 +102,36 @@ void Enemy::Update(b2Vec2 gravity)
 			m_body->SetLinearVelocity(b2Vec2(direction * speed, m_body->GetLinearVelocity().y));
 			break;
 
-		case 1:
-			m_body->ApplyForceToCenter(b2Vec2(-2 * gravity.x * m_body->GetMass(), 2 * gravity.y * m_body->GetMass()), true);
+		case 4:
+			if (gravity.x > 0)
+				m_body->ApplyForceToCenter(b2Vec2(-2 * gravity.x * m_body->GetMass(), 0), true);
+			else if (gravity.x == 0)
+				m_body->ApplyForceToCenter(b2Vec2(-b2Abs(gravity.y) * m_body->GetMass(), -gravity.y), true);
+			m_body->SetLinearVelocity(b2Vec2(m_body->GetLinearVelocity().x, direction * speed));
 			break;
 			
-		case 2:
-			m_body->ApplyForceToCenter(b2Vec2(-2 * gravity.x * m_body->GetMass(), 2 * gravity.y * m_body->GetMass()), true);
+		case 5:
+			if (gravity.y < 0)
+				m_body->ApplyForceToCenter(b2Vec2(0, -2 * gravity.y * m_body->GetMass()), true);
+			else if (gravity.y == 0)
+				m_body->ApplyForceToCenter(b2Vec2(-gravity.x, b2Abs(gravity.x) * m_body->GetMass()), true);
+			m_body->SetLinearVelocity(b2Vec2(direction * speed, m_body->GetLinearVelocity().y)); 
 			break;
 
-		case 3:
-			m_body->ApplyForceToCenter(b2Vec2(-2 * gravity.x * m_body->GetMass(), 2 * gravity.y * m_body->GetMass()), true);
+		case 6:
+			if (gravity.x < 0)
+				m_body->ApplyForceToCenter(b2Vec2(-2 * gravity.x * m_body->GetMass(), 0), true);
+			else if (gravity.x == 0)
+				m_body->ApplyForceToCenter(b2Vec2(b2Abs(gravity.y) * m_body->GetMass(), -gravity.y), true);
+			m_body->SetLinearVelocity(b2Vec2(m_body->GetLinearVelocity().x, direction * speed)); 
+			break;
+
+		default:
+			if (gravity.y > 0)
+				m_body->ApplyForceToCenter(b2Vec2(0, -2 * gravity.y * m_body->GetMass()), true);
+			else if (gravity.y == 0)
+				m_body->ApplyForceToCenter(b2Vec2(-gravity.x, -b2Abs(gravity.x) * m_body->GetMass()), true);
+			m_body->SetLinearVelocity(b2Vec2(direction * speed, m_body->GetLinearVelocity().y));
 			break;
 			
 	}
@@ -111,7 +141,7 @@ void Enemy::Update(b2Vec2 gravity)
 
 	if (bullet != NULL && !canShoot)
 	{
-		if (bullet->GetBody()->IsAwake())
+		if (bullet->GetBody()->IsActive())
 		{
 			if (bullet->GetBody()->GetContactList() != NULL)
 			{

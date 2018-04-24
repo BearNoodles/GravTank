@@ -16,6 +16,7 @@ public:
 	b2Vec2 GetPosition();
 	void BulletCollision();
 	void Die();
+	bool GetDead();
 
 private:
 	void Init();
@@ -29,6 +30,8 @@ private:
 	int direction;
 	float speed;
 	int enemyType;
+
+	bool isDead;
 
 	b2Vec2 startPosition;
 

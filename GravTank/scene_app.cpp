@@ -138,8 +138,6 @@ void SceneApp::Init()
 
 	
 
-	InitFont();
-	SetupLights();
 
 	// initialise the physics world
 	gravityAmount = 9.81f;
@@ -148,8 +146,14 @@ void SceneApp::Init()
 	gameManager = new GameManager(world_, primitive_builder_);
 	gameManager->LoadLevel();
 	player = new Player(world_, primitive_builder_, gameManager->GetStartPosition());
+	playerSpeed = 6;
 	InitGround();
 	InitBuildings();
+
+
+	InitFont();
+	InitHealthSprite();
+	SetupLights();
 }
 
 void SceneApp::CleanUp()
@@ -226,7 +230,7 @@ void SceneApp::UpdatePlaying()
 	// update object visuals from simulation data
 	player->Update();
 
-	gameManager->Update(world_->GetGravity());
+	
 
 	// don't have to update the ground visuals as it is static
 
@@ -249,6 +253,7 @@ void SceneApp::UpdatePlaying()
 			b2Body* playerBody = NULL;
 			b2Body* enemyBody = NULL;
 			b2Body* bulletBody = NULL;
+			b2Body* tileBody = NULL;
 
 
 			GameObject* gameObjectA = NULL;
@@ -260,6 +265,7 @@ void SceneApp::UpdatePlaying()
 			GameObject* playerTemp = NULL;
 			GameObject* enemyTemp = NULL;
 			GameObject* bulletTemp = NULL;
+			GameObject* tileTemp = NULL;
 
 
 
@@ -279,6 +285,11 @@ void SceneApp::UpdatePlaying()
 				enemyTemp = gameObjectA;
 				enemyBody = bodyA;
 			}
+			else if (gameObjectA != NULL && gameObjectA->GetType() == TILE)
+			{
+				tileTemp = gameObjectA;
+				tileBody = bodyA;
+			}
 
 			if (gameObjectB != NULL && gameObjectB->GetType() == PLAYER)
 			{
@@ -290,18 +301,31 @@ void SceneApp::UpdatePlaying()
 				bulletTemp = gameObjectB;
 				bulletBody = bodyB;
 			}
-			else if (gameObjectB != NULL && gameObjectB->GetType() == BULLET)
+			else if (gameObjectB != NULL && gameObjectB->GetType() == ENEMY)
 			{
 				enemyTemp = gameObjectB;
 				enemyBody = bodyB;
 			}
+			else if (gameObjectB != NULL && gameObjectB->GetType() == TILE)
+			{
+				tileTemp = gameObjectB;
+				tileBody = bodyB;
+			}
 
 			if (playerTemp && bulletTemp)
 			{
-				gameManager->Reset();
-				gameManager->LoadLevel();
-				player->SetPosition(gameManager->GetStartPosition());
+				player->ReduceHealth();
 				bulletBody->SetActive(false);
+				
+				if (player->GetHealth() <= 0)
+				{
+					bulletBody->SetActive(false);
+					player->SetHealth(player->GetMaxHealth());
+					gameManager->Reset();
+					gameManager->LoadLevel();
+					player->SetPosition(gameManager->GetStartPosition());
+					break;
+				}
 				break;
 			}
 			else if (enemyTemp && bulletTemp)
@@ -310,7 +334,7 @@ void SceneApp::UpdatePlaying()
 				bulletBody->SetActive(false);
 				break;
 			}
-			else if (bulletTemp)
+			else if (bulletTemp && tileTemp)
 			{
 				bulletBody->SetActive(false);
 				break;
@@ -321,6 +345,8 @@ void SceneApp::UpdatePlaying()
 		// Get next contact point
 		contact = contact->GetNext();
 	}
+
+	gameManager->Update(world_->GetGravity());
 }
 
 void SceneApp::ProcessControllerInput()
@@ -343,95 +369,12 @@ void SceneApp::ProcessControllerInput()
 
 			if (controller->left_stick_x_axis() >= 0.3f)
 			{
-				if (camera.GetRotating())
-				{
-					player->SetPlayerRight(true);
-					if (player->GetPlayerLeft())
-					{
-						camera.ChangeCameraTarget(-1);
-						player->SetPlayerLeft(false);
-					}
-					if (camera.CameraTargetReached())
-					{
-						camera.SetRotating(false);
-						player->SetPlayerRight(false);
-					}
-					else
-					{
-						camera.RotateCam(-1);
-						world_->SetGravity(b2Vec2(-gravityAmount * camera.GetCameraUp().x(), -gravityAmount * camera.GetCameraUp().y()));
-					}
-				}
-				else if (b2Abs(player->GetVelocity().x) < 0.1f && b2Abs(player->GetVelocity().y) < 0.1f && player->GetPlayerRight())
-				{
-					//rotate
-					camera.SetRotating(true);
-					camera.ChangeCameraTarget(-1);
-					player->SetVelocity(b2Vec2_zero);
-				}
-
-				else
-				{
-					if (camera.GetCameraTarget() == 0 || camera.GetCameraTarget() == 2)
-					{
-						player->SetVelocity(b2Vec2(3 * camera.GetCameraRight().x, player->GetVelocity().y));
-					}
-					else
-					{
-						player->SetVelocity(b2Vec2(player->GetVelocity().x, 3 * camera.GetCameraRight().y));
-					}
-
-					player->SetPlayerRight(true);
-				}
-
-				player->SetPlayerLeft(false);
-
+				RightPressed();
 			}
 
 			else if (controller->left_stick_x_axis() <= 0.3f)
 			{
-				if (camera.GetRotating())
-				{
-					player->SetPlayerLeft(true);
-					if (player->GetPlayerRight())
-					{
-						camera.ChangeCameraTarget(1);
-						player->SetPlayerRight(false);
-					}
-					if (camera.CameraTargetReached())
-					{
-						camera.SetRotating(false);
-						player->SetPlayerLeft(false);
-					}
-					else
-					{
-						camera.RotateCam(1);
-						world_->SetGravity(b2Vec2(-gravityAmount * camera.GetCameraUp().x(), -gravityAmount * camera.GetCameraUp().y()));
-					}
-				}
-				else if (b2Abs(player->GetVelocity().x) < 0.1f && b2Abs(player->GetVelocity().y) < 0.1f && player->GetPlayerLeft())
-				{
-					//rotate
-					camera.SetRotating(true);
-					camera.ChangeCameraTarget(1);
-					player->SetVelocity(b2Vec2_zero);
-				}
-
-				else
-				{
-					if (camera.GetCameraTarget() == 0 || camera.GetCameraTarget() == 2)
-					{
-						player->SetVelocity(b2Vec2(-3 * camera.GetCameraRight().x, player->GetVelocity().y));
-					}
-					else
-					{
-						player->SetVelocity(b2Vec2(player->GetVelocity().x, -3 * camera.GetCameraRight().y));
-					}
-					player->SetPlayerLeft(true);
-				}
-
-				player->SetPlayerRight(false);
-
+				LeftPressed();
 			}
 
 			else
@@ -478,112 +421,11 @@ void SceneApp::ProcessKeyboardInput()
 		}
 		if (keyboard->IsKeyDown(gef::Keyboard::KC_RIGHT))
 		{
-			if (camera.GetRotating())
-			{
-				player->SetPlayerRight(true);
-				if (player->GetPlayerLeft())
-				{
-					camera.ChangeCameraTarget(-1);
-					player->SetPlayerLeft(false);
-				}
-				if (camera.CameraTargetReached())
-				{
-					camera.SetRotating(false);
-					player->SetPlayerRight(false);
-				}
-				else
-				{
-					camera.RotateCam(-1);
-					world_->SetGravity(b2Vec2(-gravityAmount * camera.GetCameraUp().x(), -gravityAmount * camera.GetCameraUp().y()));
-				}
-			}
-			else if (b2Abs(player->GetVelocity().x) < 0.1f && b2Abs(player->GetVelocity().y) < 0.1f && player->GetPlayerRight())
-			{
-				//rotate
-				camera.SetRotating(true);
-				camera.ChangeCameraTarget(-1);
-				player->SetVelocity(b2Vec2_zero);
-			}
-
-			else
-			{
-				if (camera.GetCameraTarget() == 0 || camera.GetCameraTarget() == 2)
-				{
-					player->SetVelocity(b2Vec2(3 * camera.GetCameraRight().x, player->GetVelocity().y));
-				}
-				else
-				{
-					player->SetVelocity(b2Vec2(player->GetVelocity().x, 3 * camera.GetCameraRight().y));
-				}
-				
-				player->SetPlayerRight(true);
-			}
-
-			player->SetPlayerLeft(false);
-			
+			RightPressed();
 		}
 		else if (keyboard->IsKeyDown(gef::Keyboard::KC_LEFT))
 		{
-			if (camera.GetRotating())
-			{
-				player->SetPlayerLeft(true);
-				if (player->GetPlayerRight())
-				{
-					camera.ChangeCameraTarget(1);
-					player->SetPlayerRight(false);
-				}
-				if (camera.CameraTargetReached())
-				{
-					camera.SetRotating(false);
-					player->SetPlayerLeft(false);
-				}
-				else
-				{
-					camera.RotateCam(1);
-					world_->SetGravity(b2Vec2(-gravityAmount * camera.GetCameraUp().x(), -gravityAmount * camera.GetCameraUp().y()));
-				}
-			}
-			else if (b2Abs(player->GetVelocity().x) < 0.1f && b2Abs(player->GetVelocity().y) < 0.1f && player->GetPlayerLeft())
-			{
-				//rotate
-				camera.SetRotating(true);
-				camera.ChangeCameraTarget(1);
-				player->SetVelocity(b2Vec2_zero);
-			}
-
-			else
-			{
-				if (camera.GetCameraTarget() == 0 || camera.GetCameraTarget() == 2)
-				{
-					player->SetVelocity(b2Vec2(-3 * camera.GetCameraRight().x, player->GetVelocity().y));
-				}
-				else
-				{
-					player->SetVelocity(b2Vec2(player->GetVelocity().x, -3 * camera.GetCameraRight().y));
-				}
-				player->SetPlayerLeft(true);
-			}
-
-			player->SetPlayerRight(false);
-
-		}
-		else
-		{
-			if (camera.GetCameraTarget() == 0 || camera.GetCameraTarget() == 2)
-			{
-				player->SetVelocity(b2Vec2(0.0f, player->GetVelocity().y));
-			}
-			else
-			{
-				player->SetVelocity(b2Vec2(player->GetVelocity().x, 0.0f));
-			}
-			
-			
-			if (!camera.GetRotating())
-			{
-				player->SetPlayerRight(false);
-				player->SetPlayerLeft(false);
-			}
+			LeftPressed();
 		}
 
 		if (keyboard->IsKeyDown(gef::Keyboard::KC_SPACE))
@@ -662,7 +504,10 @@ void SceneApp::Render()
 	renderer_3d_->set_override_material(&primitive_builder_->blue_material());
 	for (int i = 0; i < gameManager->GetEnemyCount(); i++)
 	{
-		renderer_3d_->DrawMesh(*gameManager->GetEnemy(i));
+		if (!gameManager->GetEnemy(i)->GetDead())
+		{
+			renderer_3d_->DrawMesh(*gameManager->GetEnemy(i));
+		}
 	}
 	renderer_3d_->set_override_material(NULL);
 
@@ -772,6 +617,17 @@ void SceneApp::InitFont()
 	font_->Load("comic_sans");
 }
 
+void SceneApp::InitHealthSprite()
+{
+	for (int i = 0; i < player->GetMaxHealth(); i++)
+	{
+		healths[i].set_position(gef::Vector4((40 * i) + 30, 30, 0));
+		healths[i].set_height(30);
+		healths[i].set_width(30);
+		healths[i].set_colour(0xFF0000FF);
+	}
+}
+
 void SceneApp::CleanUpFont()
 {
 	delete font_;
@@ -784,6 +640,10 @@ void SceneApp::DrawHUD()
 	{
 		// display frame rate
 		font_->RenderText(sprite_renderer_, gef::Vector4(850.0f, 510.0f, -0.9f), 1.0f, 0xffffffff, gef::TJ_LEFT, "FPS: %.1f", fps_);
+	}
+	for (int i = 0; i < player->GetHealth(); i++)
+	{
+		sprite_renderer_->DrawSprite(healths[i]);
 	}
 }
 
@@ -801,4 +661,96 @@ void SceneApp::SetupLights()
 	default_point_light.set_colour(gef::Colour(0.7f, 0.7f, 1.0f, 1.0f));
 	default_point_light.set_position(gef::Vector4(-500.0f, 400.0f, 700.0f));
 	default_shader_data.AddPointLight(default_point_light);
+}
+
+void SceneApp::RightPressed()
+{
+	if (camera.GetRotating())
+	{
+		player->SetPlayerRight(true);
+		if (player->GetPlayerLeft())
+		{
+			camera.ChangeCameraTarget(-1);
+			player->SetPlayerLeft(false);
+		}
+		if (camera.CameraTargetReached())
+		{
+			camera.SetRotating(false);
+			player->SetPlayerRight(false);
+		}
+		else
+		{
+			camera.RotateCam(-1);
+			world_->SetGravity(b2Vec2(-gravityAmount * camera.GetCameraUp().x(), -gravityAmount * camera.GetCameraUp().y()));
+		}
+	}
+	else if (b2Abs(player->GetVelocity().x) < 0.1f && b2Abs(player->GetVelocity().y) < 0.1f && player->GetPlayerRight())
+	{
+		//rotate
+		camera.SetRotating(true);
+		camera.ChangeCameraTarget(-1);
+		player->SetVelocity(b2Vec2_zero);
+	}
+
+	else
+	{
+		if (camera.GetCameraTarget() == 0 || camera.GetCameraTarget() == 2)
+		{
+			player->SetVelocity(b2Vec2(playerSpeed * camera.GetCameraRight().x, player->GetVelocity().y));
+		}
+		else
+		{
+			player->SetVelocity(b2Vec2(player->GetVelocity().x, playerSpeed * camera.GetCameraRight().y));
+		}
+
+		player->SetPlayerRight(true);
+	}
+
+	player->SetPlayerLeft(false);
+
+
+}
+void SceneApp::LeftPressed()
+{
+	if (camera.GetRotating())
+	{
+		player->SetPlayerLeft(true);
+		if (player->GetPlayerRight())
+		{
+			camera.ChangeCameraTarget(1);
+			player->SetPlayerRight(false);
+		}
+		if (camera.CameraTargetReached())
+		{
+			camera.SetRotating(false);
+			player->SetPlayerLeft(false);
+		}
+		else
+		{
+			camera.RotateCam(1);
+			world_->SetGravity(b2Vec2(-gravityAmount * camera.GetCameraUp().x(), -gravityAmount * camera.GetCameraUp().y()));
+		}
+	}
+	else if (b2Abs(player->GetVelocity().x) < 0.1f && b2Abs(player->GetVelocity().y) < 0.1f && player->GetPlayerLeft())
+	{
+		//rotate
+		camera.SetRotating(true);
+		camera.ChangeCameraTarget(1);
+		player->SetVelocity(b2Vec2_zero);
+	}
+
+	else
+	{
+		if (camera.GetCameraTarget() == 0 || camera.GetCameraTarget() == 2)
+		{
+			player->SetVelocity(b2Vec2(-playerSpeed * camera.GetCameraRight().x, player->GetVelocity().y));
+		}
+		else
+		{
+			player->SetVelocity(b2Vec2(player->GetVelocity().x, -playerSpeed * camera.GetCameraRight().y));
+		}
+		player->SetPlayerLeft(true);
+	}
+
+	player->SetPlayerRight(false);
 }

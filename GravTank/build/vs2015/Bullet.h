@@ -2,6 +2,10 @@
 #include "game_object.h"
 #include "primitive_builder.h"
 
+enum BulletType
+{
+	PLAYERBULLET, ENEMYBULLET
+};
 
 class Bullet : public GameObject
 {
@@ -16,6 +20,9 @@ public:
 	void MyCollisionResponse() override;
 
 	void Fire(b2Vec2 force, b2Vec2 pos, b2Vec2 offset);
+
+	BulletType type;
+	void SetBulletType(BulletType value);
 
 	void Reset();
 

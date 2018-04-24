@@ -13,11 +13,13 @@ Player::Player(b2World* world, PrimitiveBuilder* builder, b2Vec2 startPos) :
 	canShoot = true;
 	playerRight = false;
 	playerLeft = false;
+	maxHealth = 5;
+	health = maxHealth;
 }
 
 void Player::Init()
 {
-	speed = 3.0f;
+	speed = 6.0f;
 
 	// setup the mesh for the player
 	set_mesh(m_builder ->GetDefaultCubeMesh());
@@ -55,27 +57,46 @@ void Player::Init()
 void Player::CreateBullet()
 {
 	bullet = new Bullet(m_body->GetPosition(), m_world, m_builder);
+	bullet->SetBulletType(PLAYERBULLET);
 	canShoot = true;
+}
+
+int Player::GetHealth()
+{
+	return health;
+}
+
+int Player::GetMaxHealth()
+{
+	return maxHealth;
+}
+
+void Player::ReduceHealth()
+{
+	health--;
+}
+
+void Player::SetHealth(int value)
+{
+	health = value;
 }
 
 void Player::Update()
 {
 	UpdateFromSimulation(m_body);
+	bullet->Update();
 
-	if (bullet != NULL && !canShoot)
-	{
-		if (bullet->GetBody()->IsAwake())
-		{
-			if (bullet->GetBody()->GetContactList() != NULL)
-			{
-				bullet->Reset();
-				canShoot = true;
-			}
-
-
-			bullet->Update();
-		}
-	}
+	//if (bullet != NULL && !canShoot)
+	//{
+	//	if (bullet->GetBody()->IsActive())
+	//	{
+	//		if (bullet->GetBody()->GetContactList() != NULL)
+	//		{
+	//			//bullet->Reset();
+	//			canShoot = true;
+	//		}
+	//	}
+	//}
 }
 
 gef::MeshInstance* Player::GetBulletMesh()
@@ -86,6 +107,11 @@ gef::MeshInstance* Player::GetBulletMesh()
 bool Player::GetCanShoot()
 {
 	return canShoot;
+}
+
+void Player::SetCanShoot(bool value)
+{
+	canShoot = value;
 }
 
 void Player::Shoot(b2Vec2 force)

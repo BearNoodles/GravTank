@@ -11,6 +11,7 @@
 #include "GameManager.h"
 #include "Enemy.h"
 #include "Player.h"
+#include "graphics\sprite.h"
 
 // FRAMEWORK FORWARD DECLARATIONS
 namespace gef
@@ -36,6 +37,7 @@ private:
 	void InitGround();
 	void InitBuildings();
 	void InitFont();
+	void InitHealthSprite();
 	void CleanUpFont();
 	void DrawHUD();
 	void SetupLights();
@@ -50,6 +52,9 @@ private:
 
 	gef::InputManager* input_manager_;
 
+	void RightPressed();
+	void LeftPressed();
+
 	PrimitiveBuilder* primitive_builder_;
 
 	// create the physics world
@@ -57,6 +62,8 @@ private:
 
 	// player variables
 	Player* player;
+	float playerSpeed;
+	gef::Sprite healths[10];
 
 	// ground variables
 	gef::Mesh* ground_mesh_;

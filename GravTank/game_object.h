@@ -6,7 +6,7 @@
 
 enum ObjectType
 {
-	NONE, PLAYER, ENEMY, BULLET
+	NONE, PLAYER, ENEMY, BULLET, TILE
 };
 
 class GameObject : public gef::MeshInstance
