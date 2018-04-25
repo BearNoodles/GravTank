@@ -321,16 +321,13 @@ void SceneApp::UpdatePlaying()
 
 					if (player->GetHealth() <= 0)
 					{
-						bulletBody->SetActive(false);
-						player->SetHealth(player->GetMaxHealth());
 						gameManager->Reset();
 						gameManager->LoadLevel();
-						player->SetPosition(gameManager->GetStartPosition());
+						player->ResetPlayer(gameManager->GetStartPosition());
 					}
 				}
 				else
 				{
-					player->SetCanShoot(true);
 					bulletBody->SetActive(false);
 				}
 				break;
@@ -339,8 +336,21 @@ void SceneApp::UpdatePlaying()
 			{
 				if (bulletTemp->GetBulletType() == PLAYERBULLET)
 				{
-					
+					gameManager->ReduceEnemyCount();
 					enemyBody->SetActive(false);
+					bulletBody->SetActive(false);
+
+					if (gameManager->GetEnemiesAlive() <= 0)
+					{
+						gameManager->Reset();
+						gameManager->NextLevel();
+						gameManager->LoadLevel();
+						player->ResetPlayer(gameManager->GetStartPosition());
+					}
+					break;
+				}
+				else
+				{
 					bulletBody->SetActive(false);
 					break;
 				}
@@ -451,7 +461,7 @@ void SceneApp::ProcessKeyboardInput()
 				gameManager->Reset();
 				gameManager->NextLevel();
 				gameManager->LoadLevel();
-				player->SetPosition(gameManager->GetStartPosition());
+				player->ResetPlayer(gameManager->GetStartPosition());
 			}
 		}
 		if (keyboard->IsKeyDown(gef::Keyboard::KC_R))
@@ -502,7 +512,8 @@ void SceneApp::Render()
 	{
 		for (int j = 0; j < levelHeight; j++)
 		{
-			renderer_3d_->DrawMesh(gameManager->GetBlock(i, j));
+			if(gameManager->GetBlock(i,j) != NULL)
+			renderer_3d_->DrawMesh(*gameManager->GetBlock(i, j));
 		}
 	}
 

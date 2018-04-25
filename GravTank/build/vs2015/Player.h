@@ -25,6 +25,7 @@ public:
 	int GetMaxHealth();
 	void SetHealth(int value);
 	void ReduceHealth();
+	void ResetPlayer(b2Vec2 startPos);
 
 private:
 	void Init();

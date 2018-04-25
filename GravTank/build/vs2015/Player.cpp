@@ -33,7 +33,7 @@ void Player::Init()
 	//player_body_def.userData = (GameObject*)this;
 
 	m_body = m_world->CreateBody(&player_body_def);
-	m_body->SetUserData((GameObject*)this);
+	m_body->SetUserData(this);
 
 	// create the shape for the player
 	b2PolygonShape player_shape;
@@ -79,6 +79,13 @@ void Player::ReduceHealth()
 void Player::SetHealth(int value)
 {
 	health = value;
+}
+
+void Player::ResetPlayer(b2Vec2 startPos)
+{
+	SetHealth(maxHealth);
+	SetPosition(startPos);
+	bullet->GetBody()->SetActive(false);
 }
 
 void Player::Update()
