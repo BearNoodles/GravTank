@@ -2,6 +2,7 @@
 #include "game_object.h"
 #include "primitive_builder.h"
 #include "Bullet.h"
+#include "graphics\material.h"
 
 
 class Enemy : public GameObject

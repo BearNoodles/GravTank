@@ -28,9 +28,7 @@ void Player::Init()
 	b2BodyDef player_body_def;
 	player_body_def.type = b2_dynamicBody;
 	player_body_def.fixedRotation = true;
-	//player_body_def.position = levelBuilder->GetStartPosition();
 	player_body_def.position = startPosition;
-	//player_body_def.userData = (GameObject*)this;
 
 	m_body = m_world->CreateBody(&player_body_def);
 	m_body->SetUserData(this);

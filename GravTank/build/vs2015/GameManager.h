@@ -42,7 +42,6 @@ public:
 	void Update(b2Vec2 gravity);
 
 private:
-
 	const int width = 15;
 	const int height = 15;
 

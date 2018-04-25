@@ -27,7 +27,7 @@ void Enemy::Init()
 	direction = 1;
 
 	// setup the mesh for the Enemy
-	set_mesh(m_builder->CreateSphereMesh(1.0f, 10, 10));
+	set_mesh(m_builder->CreateSphereMesh(1.0f, 10, 10, gef::Vector4(0,0,0)));
 
 	// create a physics body for the player
 	b2BodyDef enemy_body_def;

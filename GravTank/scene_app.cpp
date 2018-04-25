@@ -17,7 +17,8 @@ SceneApp::SceneApp(gef::Platform& platform) :
 	primitive_builder_(NULL),
 	font_(NULL),
 	world_(NULL),
-	toDel(NULL)
+	toDel(NULL),
+	tex()
 {
 }
 
@@ -136,7 +137,12 @@ void SceneApp::Init()
 	// initialise primitive builder to make create some 3D geometry easier
 	primitive_builder_ = new PrimitiveBuilder(platform_);
 
-	
+	pngLoader.Load("face.png", platform_, img);
+	//tex = gef::Texture::Create(platform_, img);
+	tex->Create(platform_, img);
+
+	//mat.set_colour(0xff0000ff);
+	mat.set_texture(tex);
 
 
 	// initialise the physics world
@@ -149,7 +155,9 @@ void SceneApp::Init()
 	playerSpeed = 6;
 	InitGround();
 	InitBuildings();
-
+	
+	menuSprite.set_texture(tex);
+	menu.SetSprite(menuSprite);
 
 	InitFont();
 	InitHealthSprite();
@@ -187,6 +195,7 @@ void SceneApp::CleanUp()
 
 	delete player;
 	player = NULL;
+
 }
 
 bool SceneApp::Update(float frame_time)
@@ -206,6 +215,7 @@ bool SceneApp::Update(float frame_time)
 		case LOADING:
 			break;
 		case MENU:
+			UpdateMenu();
 			break;
 		case PLAYING:
 			UpdatePlaying();
@@ -215,6 +225,11 @@ bool SceneApp::Update(float frame_time)
 	
 
 	return true;
+}
+
+void SceneApp::UpdateMenu()
+{
+
 }
 
 void SceneApp::UpdatePlaying()
@@ -481,80 +496,94 @@ void SceneApp::ProcessKeyboardInput()
 
 void SceneApp::Render()
 {
-	// setup camera
-
-	// projection
-	float fov = gef::DegToRad(45.0f);
-	float aspect_ratio = (float)platform_.width() / (float)platform_.height();
-	gef::Matrix44 projection_matrix;
-	projection_matrix = platform_.PerspectiveProjectionFov(fov, aspect_ratio, 0.1f, 100.0f);
-	renderer_3d_->set_projection_matrix(projection_matrix);
 	
-	// view
-	gef::Vector4 camera_eye(player->GetPosition().x, player->GetPosition().y, 30.0f);
-	gef::Vector4 camera_lookat(player->GetPosition().x, player->GetPosition().y, 0.0f);
-	
-	gef::Matrix44 view_matrix;
-	view_matrix.LookAt(camera_eye, camera_lookat, camera.GetCameraUp());
-	renderer_3d_->set_view_matrix(view_matrix);
-
-	// draw 3d geometry
-	renderer_3d_->Begin();
-
-	// draw ground
-	renderer_3d_->DrawMesh(ground_);
-
-	//draw building
-	renderer_3d_->DrawMesh(building);
-	renderer_3d_->DrawMesh(building2);
-
-	for (int i = 0; i < levelWidth; i++)
+	if (gameManager->GetState() == MENU)
 	{
-		for (int j = 0; j < levelHeight; j++)
+
+		
+		sprite_renderer_->Begin(false);
+		sprite_renderer_->DrawSprite(menu.GetSprite());
+		sprite_renderer_->End();
+	}
+
+	else
+	{
+		// setup camera
+
+		// projection
+		float fov = gef::DegToRad(45.0f);
+		float aspect_ratio = (float)platform_.width() / (float)platform_.height();
+		gef::Matrix44 projection_matrix;
+		projection_matrix = platform_.PerspectiveProjectionFov(fov, aspect_ratio, 0.1f, 100.0f);
+		renderer_3d_->set_projection_matrix(projection_matrix);
+
+		// view
+		gef::Vector4 camera_eye(player->GetPosition().x, player->GetPosition().y, 30.0f);
+		gef::Vector4 camera_lookat(player->GetPosition().x, player->GetPosition().y, 0.0f);
+
+		gef::Matrix44 view_matrix;
+		view_matrix.LookAt(camera_eye, camera_lookat, camera.GetCameraUp());
+		renderer_3d_->set_view_matrix(view_matrix);
+
+		// draw 3d geometry
+		renderer_3d_->Begin();
+
+		// draw ground
+		renderer_3d_->DrawMesh(ground_);
+
+		//draw building
+		renderer_3d_->DrawMesh(building);
+		renderer_3d_->DrawMesh(building2);
+
+		for (int i = 0; i < levelWidth; i++)
 		{
-			if(gameManager->GetBlock(i,j) != NULL)
-			renderer_3d_->DrawMesh(*gameManager->GetBlock(i, j));
+			for (int j = 0; j < levelHeight; j++)
+			{
+				if (gameManager->GetBlock(i, j) != NULL)
+					renderer_3d_->DrawMesh(*gameManager->GetBlock(i, j));
+			}
 		}
-	}
 
-	// draw player
-	renderer_3d_->set_override_material(&primitive_builder_->red_material());
-	renderer_3d_->DrawMesh(*player);
-	renderer_3d_->set_override_material(NULL);
+		// draw player
+		renderer_3d_->set_override_material(&primitive_builder_->red_material());
+		renderer_3d_->DrawMesh(*player);
+		renderer_3d_->set_override_material(NULL);
 
-	//rendenemy
-	renderer_3d_->set_override_material(&primitive_builder_->blue_material());
-	for (int i = 0; i < gameManager->GetEnemyCount(); i++)
-	{
-		if (!gameManager->GetEnemy(i)->GetDead())
+		//rendenemy
+		renderer_3d_->set_override_material(&primitive_builder_->blue_material());
+		for (int i = 0; i < gameManager->GetEnemyCount(); i++)
 		{
-			renderer_3d_->DrawMesh(*gameManager->GetEnemy(i));
+			if (!gameManager->GetEnemy(i)->GetDead())
+			{
+				renderer_3d_->DrawMesh(*gameManager->GetEnemy(i));
+			}
 		}
-	}
-	renderer_3d_->set_override_material(NULL);
+		renderer_3d_->set_override_material(NULL);
 
-	//
-	renderer_3d_->set_override_material(&primitive_builder_->red_material());
-	for (int i = 0; i < gameManager->GetEnemyCount(); i++)
-	{
-		if (!gameManager->GetEnemy(i)->GetCanShoot())
+		//
+		renderer_3d_->set_override_material(&primitive_builder_->blue_material());
+		for (int i = 0; i < gameManager->GetEnemyCount(); i++)
 		{
-			renderer_3d_->DrawMesh(*gameManager->GetEnemy(i)->GetBulletMesh());
+			if (!gameManager->GetEnemy(i)->GetCanShoot())
+			{
+				renderer_3d_->DrawMesh(*gameManager->GetEnemy(i)->GetBulletMesh());
+			}
 		}
+
+		if (!player->GetCanShoot())
+		{
+			renderer_3d_->DrawMesh(*player->GetBulletMesh());
+		}
+		renderer_3d_->set_override_material(NULL);
+
+		renderer_3d_->End();
+
+		// start drawing sprites, but don't clear the frame buffer
+		sprite_renderer_->Begin(false);
+		DrawHUD();
+		sprite_renderer_->DrawSprite(menu.GetSprite());
+		sprite_renderer_->End();
 	}
-
-	if (!player->GetCanShoot())
-	{
-		renderer_3d_->DrawMesh(*player->GetBulletMesh());
-	}
-	renderer_3d_->set_override_material(NULL);
-
-	renderer_3d_->End();
-
-	// start drawing sprites, but don't clear the frame buffer
-	sprite_renderer_->Begin(false);
-	DrawHUD();
-	sprite_renderer_->End();
 }
 
 
@@ -647,6 +676,7 @@ void SceneApp::InitHealthSprite()
 		healths[i].set_height(30);
 		healths[i].set_width(30);
 		healths[i].set_colour(0xFF0000FF);
+		healths[i].set_texture(tex);
 	}
 }
 

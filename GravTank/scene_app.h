@@ -8,10 +8,14 @@
 #include <box2d/Box2D.h>
 #include "game_object.h"
 #include "Camera.h"
+#include "Menu.h"
 #include "GameManager.h"
 #include "Enemy.h"
 #include "Player.h"
 #include "graphics\sprite.h"
+#include "graphics\texture.h"
+#include "graphics\image_data.h"
+#include "assets\png_loader.h"
 
 // FRAMEWORK FORWARD DECLARATIONS
 namespace gef
@@ -21,6 +25,9 @@ namespace gef
 	class Font;
 	class InputManager;
 	class Renderer3D;
+	class Material;
+	class Texture;
+	class PngLoader;
 }
 
 class SceneApp : public gef::Application
@@ -31,6 +38,7 @@ public:
 	void CleanUp();
 	bool Update(float frame_time);
 	void UpdatePlaying();
+	void UpdateMenu();
 	void Render();
 private:
 	void InitPlayer();
@@ -84,10 +92,19 @@ private:
 
 	Camera camera;
 
+	Menu menu;
+
 	//Gravity
 	float gravityAmount;
 
 	float fps_;
+
+	gef::Material mat;
+	gef::PNGLoader pngLoader;
+	gef::ImageData img;
+	gef::Texture* tex;
+
+	gef::Sprite menuSprite;
 };
 
 #endif // _SCENE_APP_H
