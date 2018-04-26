@@ -138,12 +138,13 @@ void SceneApp::Init()
 	primitive_builder_ = new PrimitiveBuilder(platform_);
 
 	pngLoader.Load("face.png", platform_, img);
-	//tex = gef::Texture::Create(platform_, img);
-	tex->Create(platform_, img);
+	tex = gef::Texture::Create(platform_, img);
+	//tex->Create(platform_, img);
 
 	//mat.set_colour(0xff0000ff);
 	mat.set_texture(tex);
 
+	rightStickY = 1;
 
 	// initialise the physics world
 	gravityAmount = 9.81f;
@@ -243,7 +244,7 @@ void SceneApp::UpdatePlaying()
 	world_->Step(timeStep, velocityIterations, positionIterations);
 
 	// update object visuals from simulation data
-	player->Update();
+	player->Update(rightStickX, rightStickY);
 
 	
 
@@ -399,16 +400,31 @@ void SceneApp::ProcessControllerInput()
 			if (controller->buttons_pressed() & gef_SONY_CTRL_SQUARE)
 				gef::DebugOut("SQUARE pressed\n");
 			if (controller->buttons_pressed() & gef_SONY_CTRL_TRIANGLE)
+			{
 				gef::DebugOut("TRIANGLE pressed\n");
+				gameManager->Reset();
+				gameManager->NextLevel();
+				gameManager->LoadLevel();
+				player->ResetPlayer(gameManager->GetStartPosition());
+			}
 			if (controller->buttons_pressed() & gef_SONY_CTRL_CIRCLE)
 				gef::DebugOut("CIRCLE pressed\n");
+			if (controller->buttons_pressed() & gef_SONY_CTRL_R2)
+			{
+				b2Vec2 shotForce(rightStickX, -rightStickY);
+				shotForce.Normalize();
+				shotForce = b2Vec2(shotForce.x * 200, shotForce.y * 200);
+				player->Shoot(shotForce);
+			}
+			if (controller->buttons_pressed() & gef_SONY_CTRL_L2)
+				player->Shoot(b2Vec2(0, 100));
 
 			if (controller->left_stick_x_axis() >= 0.3f)
 			{
 				RightPressed();
 			}
 
-			else if (controller->left_stick_x_axis() <= 0.3f)
+			else if (controller->left_stick_x_axis() <= -0.3f)
 			{
 				LeftPressed();
 			}
@@ -438,6 +454,11 @@ void SceneApp::ProcessControllerInput()
 				gef::DebugOut("right_stick_x_axis: %f\n", controller->right_stick_x_axis());
 			if (controller->right_stick_y_axis() != 0.0f)
 				gef::DebugOut("right_stick_y_axis: %f\n", controller->right_stick_y_axis());
+			if (controller->right_stick_x_axis() != 0 || controller->right_stick_y_axis() != 0)
+			{
+				rightStickX = controller->right_stick_x_axis();
+				rightStickY = controller->right_stick_y_axis();
+			}
 		}
 	}
 }
@@ -462,6 +483,10 @@ void SceneApp::ProcessKeyboardInput()
 		else if (keyboard->IsKeyDown(gef::Keyboard::KC_LEFT))
 		{
 			LeftPressed();
+		}
+		else
+		{
+			StopPlayer();
 		}
 
 		if (keyboard->IsKeyDown(gef::Keyboard::KC_SPACE))
@@ -545,12 +570,13 @@ void SceneApp::Render()
 		}
 
 		// draw player
-		renderer_3d_->set_override_material(&primitive_builder_->red_material());
+		renderer_3d_->set_override_material(&mat);
 		renderer_3d_->DrawMesh(*player);
+		renderer_3d_->DrawMesh(*player->GetTurret());
 		renderer_3d_->set_override_material(NULL);
 
 		//rendenemy
-		renderer_3d_->set_override_material(&primitive_builder_->blue_material());
+		renderer_3d_->set_override_material(&mat);
 		for (int i = 0; i < gameManager->GetEnemyCount(); i++)
 		{
 			if (!gameManager->GetEnemy(i)->GetDead())
@@ -805,4 +831,24 @@ void SceneApp::LeftPressed()
 	}
 
 	player->SetPlayerRight(false);
+}
+
+void SceneApp::StopPlayer()
+{
+	if (camera.GetCameraTarget() == 0 || camera.GetCameraTarget() == 2)
+	{
+		player->SetVelocity(b2Vec2(0.0f, player->GetVelocity().y));
+	}
+	else
+	{
+		player->SetVelocity(b2Vec2(player->GetVelocity().x, 0.0f));
+	}
+
+
+	if (!camera.GetRotating())
+	{
+		player->SetPlayerRight(false);
+		player->SetPlayerLeft(false);
+	}
+	
 }

@@ -8,8 +8,10 @@ Player::Player(b2World* world, PrimitiveBuilder* builder, b2Vec2 startPos) :
 	bullet(NULL)
 {
 	startPosition = startPos;
+	turretRot = 0;
 	Init();
 	CreateBullet();
+	CreateTurret();
 	canShoot = true;
 	playerRight = false;
 	playerLeft = false;
@@ -41,11 +43,12 @@ void Player::Init()
 	b2FixtureDef player_fixture_def;
 	player_fixture_def.shape = &player_shape;
 	player_fixture_def.density = 1.0f;
-
 	// create the fixture on the rigid body
 	m_body->CreateFixture(&player_fixture_def);
+	//m_body->CreateFixture(&turret_fixture_def);
 
 	//set player gamebject type
+
 	SetType(PLAYER);
 
 	// update visuals from simulation data
@@ -57,6 +60,33 @@ void Player::CreateBullet()
 	bullet = new Bullet(m_body->GetPosition(), m_world, m_builder);
 	bullet->SetBulletType(PLAYERBULLET);
 	canShoot = true;
+}
+
+void Player::CreateTurret()
+{
+	gef::Vector4 halfSize(0.125f, 0.5f, 0);
+	turret = new GameObject();
+	turret->set_mesh(m_builder->CreateBoxMesh(halfSize));
+
+	PositionTurret(0, 1);
+	turret->SetType(NONE);
+}
+
+void Player::PositionTurret(float x, float y)
+{
+	b2Vec2 norms(x, y);
+	norms.Normalize();
+	// setup object rotation
+	gef::Matrix44 object_rotation;
+	object_rotation.RotationZ(turretRot);
+
+	// setup the object translation
+	gef::Vector4 object_translation(m_body->GetPosition().x + norms.x, m_body->GetPosition().y - norms.y, 0.0f);
+
+	// build object transformation matrix
+	gef::Matrix44 object_transform = object_rotation;
+	object_transform.SetTranslation(object_translation);
+	turret->set_transform(object_transform);;
 }
 
 int Player::GetHealth()
@@ -86,7 +116,7 @@ void Player::ResetPlayer(b2Vec2 startPos)
 	bullet->GetBody()->SetActive(false);
 }
 
-void Player::Update()
+void Player::Update(float x, float y)
 {
 	UpdateFromSimulation(m_body);
 	bullet->Update();
@@ -94,7 +124,12 @@ void Player::Update()
 	{
 		canShoot = true;
 	}
-
+	stickX = x;
+	stickY = y;
+	turretRot = b2Atan2(stickX, stickY);;
+	PositionTurret(stickX, stickY);
+	
+	//turret->UpdateFromSimulation(m_turretBody);
 	//if (bullet != NULL && !canShoot)
 	//{
 	//	if (bullet->GetBody()->IsActive())
@@ -106,6 +141,16 @@ void Player::Update()
 	//		}
 	//	}
 	//}
+}
+
+GameObject* Player::GetTurret()
+{
+	return turret;
+}
+
+void Player::SetTurretAngle(float radians)
+{
+	m_turretBody->SetTransform(m_turretBody->GetPosition(), radians);
 }
 
 gef::MeshInstance* Player::GetBulletMesh()
@@ -125,9 +170,11 @@ void Player::SetCanShoot(bool value)
 
 void Player::Shoot(b2Vec2 force)
 {
+	b2Vec2 norms(stickX, stickY);
+	norms.Normalize();
 	if (canShoot)
 	{
-		bullet->Fire(force, m_body->GetPosition(), b2Vec2(0, 1.5f));
+		bullet->Fire(force, m_body->GetPosition(), b2Vec2(norms.x * 1.5f, -norms.y * 1.5f));
 		canShoot = false;
 	}
 }
@@ -174,4 +221,7 @@ void Player::SetPlayerLeft(bool value)
 
 Player::~Player()
 {
+	delete turret;
+	turret = NULL;
+	bullet = NULL;
 }

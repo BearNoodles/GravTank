@@ -1,6 +1,7 @@
 #pragma once
 #include "game_object.h"
 #include "Bullet.h"
+#include <box2d/Box2D.h>
 
 class Player : public GameObject
 {
@@ -8,7 +9,7 @@ public:
 	Player(b2World* world_, PrimitiveBuilder* builder, b2Vec2 startPos);
 	~Player();
 
-	void Update();
+	void Update(float x, float y);
 	void Shoot(b2Vec2 force);
 	bool GetCanShoot();
 	void SetCanShoot(bool value);
@@ -26,6 +27,10 @@ public:
 	void SetHealth(int value);
 	void ReduceHealth();
 	void ResetPlayer(b2Vec2 startPos);
+	
+	
+	GameObject* GetTurret();
+	void SetTurretAngle(float radians);
 
 private:
 	void Init();
@@ -39,6 +44,17 @@ private:
 
 	bool playerRight;
 	bool playerLeft;
+
+	void CreateTurret();
+	GameObject* turret;
+	b2Body* m_turretBody;
+
+	
+	void PositionTurret(float x, float y);
+
+	float stickX;
+	float stickY;
+	float turretRot;
 
 	b2Body* m_body;
 	b2World* m_world;

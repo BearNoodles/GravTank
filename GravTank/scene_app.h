@@ -62,6 +62,7 @@ private:
 
 	void RightPressed();
 	void LeftPressed();
+	void StopPlayer();
 
 	PrimitiveBuilder* primitive_builder_;
 
@@ -72,6 +73,8 @@ private:
 	Player* player;
 	float playerSpeed;
 	gef::Sprite healths[10];
+	float rightStickX;
+	float rightStickY;
 
 	// ground variables
 	gef::Mesh* ground_mesh_;
