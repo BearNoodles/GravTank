@@ -27,7 +27,7 @@ void Enemy::Init()
 	direction = 1;
 
 	// setup the mesh for the Enemy
-	set_mesh(m_builder->CreateSphereMesh(1.0f, 10, 10, gef::Vector4(0,0,0)));
+	set_mesh(m_builder->CreateSphereMesh(1.0f, 10, 10));
 
 	// create a physics body for the player
 	b2BodyDef enemy_body_def;
@@ -39,6 +39,7 @@ void Enemy::Init()
 	m_body->SetUserData(this);
 
 	// create the shape for the player
+	
 	b2CircleShape enemy_shape;
 	enemy_shape.m_p.SetZero();
 	enemy_shape.m_radius = 1;

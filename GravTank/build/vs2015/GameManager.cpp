@@ -7,7 +7,7 @@ GameManager::GameManager(b2World* world, PrimitiveBuilder* builder) :
 	m_world(world),
 	m_builder(builder)
 {
-	m_state = PLAYING;
+	m_state = MENU;
 	currentLevel = 3;
 	enemyCount = 0;
 }

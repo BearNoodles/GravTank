@@ -41,7 +41,6 @@ public:
 	void UpdateMenu();
 	void Render();
 private:
-	void InitPlayer();
 	void InitGround();
 	void InitBuildings();
 	void InitFont();
@@ -59,7 +58,7 @@ private:
 	gef::Renderer3D* renderer_3d_;
 
 	gef::InputManager* input_manager_;
-
+	
 	void RightPressed();
 	void LeftPressed();
 	void StopPlayer();
@@ -95,17 +94,32 @@ private:
 
 	Camera camera;
 
-	Menu menu;
+	Menu* menu;
+	int screenWidth;
+	int screenHeight;
 
 	//Gravity
 	float gravityAmount;
 
 	float fps_;
 
-	gef::Material mat;
 	gef::PNGLoader pngLoader;
+	
 	gef::ImageData img;
 	gef::Texture* tex;
+	gef::Material mat;
+
+	gef::ImageData playerImage;
+	gef::Texture* playerTexture;
+	gef::Material* playerMaterial;
+
+	gef::ImageData enemyImage;
+	gef::Texture* enemyTexture;
+	gef::Material* enemyMaterial;
+
+	gef::ImageData backImage;
+	gef::Texture* backTexture;
+	gef::Material* backMaterial;
 
 	gef::Sprite menuSprite;
 };

@@ -22,110 +22,6 @@ SceneApp::SceneApp(gef::Platform& platform) :
 {
 }
 
-static const char* key_names[] =
-{
-	"0",
-	"1",
-	"2",
-	"3",
-	"4",
-	"5",
-	"6",
-	"7",
-	"8",
-	"9",
-	"A",
-	"B",
-	"C",
-	"D",
-	"E",
-	"F",
-	"G",
-	"H",
-	"I",
-	"J",
-	"K",
-	"L",
-	"M",
-	"N",
-	"O",
-	"P",
-	"Q",
-	"R",
-	"S",
-	"T",
-	"U",
-	"V",
-	"W",
-	"X",
-	"Y",
-	"Z",
-	"F1",
-	"F2",
-	"F3",
-	"F4",
-	"F5",
-	"F6",
-	"F7",
-	"F8",
-	"F9",
-	"F10",
-	"F11",
-	"F12",
-	"F13",
-	"F14",
-	"F15",
-	"NUMPAD0",
-	"NUMPAD1",
-	"NUMPAD2",
-	"NUMPAD3",
-	"NUMPAD4",
-	"NUMPAD5",
-	"NUMPAD6",
-	"NUMPAD7",
-	"NUMPAD8",
-	"NUMPAD9",
-	"NUMPADENTER",
-	"NUMPADSTAR",
-	"NUMPADEQUALS",
-	"NUMPADMINUS",
-	"NUMPADPLUS",
-	"NUMPADPERIOD",
-	"NUMPADSLASH",
-	"ESCAPE",
-	"TAB",
-	"LSHIFT",
-	"RSHIFT",
-	"LCONTROL",
-	"RCONTROL",
-	"BACKSPACE",
-	"RETURN",
-	"LALT",
-	"SPACE",
-	"CAPSLOCK",
-	"NUMLOCK",
-	"SCROLL",
-	"RALT",
-	"AT",
-	"COLON",
-	"UNDERLINE",
-	"MINUS",
-	"EQUALS",
-	"LBRACKET",
-	"RBRACKET",
-	"SEMICOLON",
-	"APOSTROPHE",
-	"GRAVE",
-	"BACKSLASH",
-	"COMMA",
-	"PERIOD",
-	"SLASH",
-	"UP",
-	"DOWN",
-	"LEFT",
-	"RIGHT"
-};
-
 void SceneApp::Init()
 {
 	sprite_renderer_ = gef::SpriteRenderer::Create(platform_);
@@ -139,12 +35,27 @@ void SceneApp::Init()
 
 	pngLoader.Load("face.png", platform_, img);
 	tex = gef::Texture::Create(platform_, img);
-	//tex->Create(platform_, img);
 
 	//mat.set_colour(0xff0000ff);
 	mat.set_texture(tex);
 
+	pngLoader.Load("player.png", platform_, playerImage);
+	playerTexture = gef::Texture::Create(platform_, playerImage);
+
+	playerMaterial = new gef::Material();
+	//mat.set_colour(0xff0000ff);
+	playerMaterial->set_texture(playerTexture);
+
+	pngLoader.Load("player.png", platform_, enemyImage);
+	enemyTexture = gef::Texture::Create(platform_, enemyImage);
+	enemyMaterial = new gef::Material();
+	//mat.set_colour(0xff0000ff);
+	enemyMaterial->set_texture(enemyTexture);
+
 	rightStickY = 1;
+
+	screenHeight = 544;
+	screenWidth = 960;
 
 	// initialise the physics world
 	gravityAmount = 9.81f;
@@ -152,13 +63,15 @@ void SceneApp::Init()
 	world_ = new b2World(gravity);
 	gameManager = new GameManager(world_, primitive_builder_);
 	gameManager->LoadLevel();
-	player = new Player(world_, primitive_builder_, gameManager->GetStartPosition());
+	player = new Player(world_, primitive_builder_, gameManager->GetStartPosition(), playerMaterial);
 	playerSpeed = 6;
 	InitGround();
 	InitBuildings();
+
+	menu = new Menu(screenWidth, screenHeight);
 	
 	menuSprite.set_texture(tex);
-	menu.SetSprite(menuSprite);
+	menu->SetSprite(menuSprite);
 
 	InitFont();
 	InitHealthSprite();
@@ -468,66 +381,69 @@ void SceneApp::ProcessKeyboardInput()
 	const gef::Keyboard* keyboard = input_manager_->keyboard();
 	if (keyboard)
 	{
-		// go through all the keys and print out some debug text when a key is pressed or released
-		for (int key_num = 0; key_num < gef::Keyboard::NUM_KEY_CODES; ++key_num)
+		if (gameManager->GetState() == MENU)
 		{
-			if (keyboard->IsKeyPressed((gef::Keyboard::KeyCode)key_num))
-				gef::DebugOut("%s pressed\n", key_names[key_num]);
-			else if (keyboard->IsKeyReleased((gef::Keyboard::KeyCode)key_num))
-				gef::DebugOut("%s released\n", key_names[key_num]);
-		}
-		if (keyboard->IsKeyDown(gef::Keyboard::KC_RIGHT))
-		{
-			RightPressed();
-		}
-		else if (keyboard->IsKeyDown(gef::Keyboard::KC_LEFT))
-		{
-			LeftPressed();
+			if (keyboard->IsKeyDown(gef::Keyboard::KC_RETURN))
+			{
+				gameManager->SetState(PLAYING);
+			}
 		}
 		else
 		{
-			StopPlayer();
-		}
-
-		if (keyboard->IsKeyDown(gef::Keyboard::KC_SPACE))
-		{
-			player->Shoot(b2Vec2(0, 100));
-		}
-		if (keyboard->IsKeyDown(gef::Keyboard::KC_P))
-		{
-			if (gameManager->GetState() == PLAYING)
+			
+			if (keyboard->IsKeyDown(gef::Keyboard::KC_RIGHT))
 			{
-				//gameManager->SetState(LOADING);
-				gameManager->Reset();
-				gameManager->NextLevel();
-				gameManager->LoadLevel();
-				player->ResetPlayer(gameManager->GetStartPosition());
+				RightPressed();
 			}
-		}
-		if (keyboard->IsKeyDown(gef::Keyboard::KC_R))
-		{
-			if (gameManager->GetState() == PLAYING)
+			else if (keyboard->IsKeyDown(gef::Keyboard::KC_LEFT))
 			{
-				//gameManager->SetState(LOADING);
-				gameManager->Reset();
-				gameManager->LoadLevel();
-				player->SetPosition(gameManager->GetStartPosition());
+				LeftPressed();
+			}
+			else
+			{
+				StopPlayer();
+			}
+
+			if (keyboard->IsKeyDown(gef::Keyboard::KC_SPACE))
+			{
+				player->Shoot(b2Vec2(0, 100));
+			}
+			if (keyboard->IsKeyDown(gef::Keyboard::KC_P))
+			{
+				if (gameManager->GetState() == PLAYING)
+				{
+					//gameManager->SetState(LOADING);
+					gameManager->Reset();
+					gameManager->NextLevel();
+					gameManager->LoadLevel();
+					player->ResetPlayer(gameManager->GetStartPosition());
+				}
+			}
+			if (keyboard->IsKeyDown(gef::Keyboard::KC_R))
+			{
+				if (gameManager->GetState() == PLAYING)
+				{
+					//gameManager->SetState(LOADING);
+					gameManager->Reset();
+					gameManager->LoadLevel();
+					player->SetPosition(gameManager->GetStartPosition());
+				}
 			}
 		}
 	}
 }
 
 
-
 void SceneApp::Render()
 {
-	
 	if (gameManager->GetState() == MENU)
 	{
+		renderer_3d_->Begin();
 
-		
+		renderer_3d_->End();
+
 		sprite_renderer_->Begin(false);
-		sprite_renderer_->DrawSprite(menu.GetSprite());
+		sprite_renderer_->DrawSprite(menu->GetSprite());
 		sprite_renderer_->End();
 	}
 
@@ -570,13 +486,13 @@ void SceneApp::Render()
 		}
 
 		// draw player
-		renderer_3d_->set_override_material(&mat);
+		renderer_3d_->set_override_material(NULL);
 		renderer_3d_->DrawMesh(*player);
 		renderer_3d_->DrawMesh(*player->GetTurret());
 		renderer_3d_->set_override_material(NULL);
 
 		//rendenemy
-		renderer_3d_->set_override_material(&mat);
+		renderer_3d_->set_override_material(NULL);
 		for (int i = 0; i < gameManager->GetEnemyCount(); i++)
 		{
 			if (!gameManager->GetEnemy(i)->GetDead())
@@ -607,7 +523,6 @@ void SceneApp::Render()
 		// start drawing sprites, but don't clear the frame buffer
 		sprite_renderer_->Begin(false);
 		DrawHUD();
-		sprite_renderer_->DrawSprite(menu.GetSprite());
 		sprite_renderer_->End();
 	}
 }

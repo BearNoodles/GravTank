@@ -6,7 +6,7 @@
 class Menu
 {
 public:
-	Menu();
+	Menu(int width, int height);
 	~Menu();
 
 	void SetSprite(gef::Sprite sprite);
@@ -14,8 +14,9 @@ public:
 
 private:
 
-
 	gef::Sprite m_sprite;
+	int m_width;
+	int m_height;
 	
 };
 

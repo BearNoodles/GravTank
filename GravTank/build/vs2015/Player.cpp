@@ -2,12 +2,13 @@
 
 
 
-Player::Player(b2World* world, PrimitiveBuilder* builder, b2Vec2 startPos) :
+Player::Player(b2World* world, PrimitiveBuilder* builder, b2Vec2 startPos, gef::Material* mat) :
 	m_world(world),
 	m_builder(builder),
 	bullet(NULL)
 {
 	startPosition = startPos;
+	m_material = mat;
 	turretRot = 0;
 	Init();
 	CreateBullet();
@@ -23,8 +24,10 @@ void Player::Init()
 {
 	speed = 6.0f;
 
-	// setup the mesh for the player
-	set_mesh(m_builder ->GetDefaultCubeMesh());
+	gef::Vector4 halfDimensions(0.75f, 0.75f, 0.75f);
+	set_mesh(m_builder->CreateBoxMesh(halfDimensions));
+	
+	
 
 	// create a physics body for the player
 	b2BodyDef player_body_def;
@@ -37,7 +40,7 @@ void Player::Init()
 
 	// create the shape for the player
 	b2PolygonShape player_shape;
-	player_shape.SetAsBox(0.5f, 0.5f);
+	player_shape.SetAsBox(0.75f, 0.75f);
 
 	// create the fixture
 	b2FixtureDef player_fixture_def;

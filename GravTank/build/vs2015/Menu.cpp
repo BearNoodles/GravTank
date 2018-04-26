@@ -2,7 +2,9 @@
 
 
 
-Menu::Menu()
+Menu::Menu(int width, int height) :
+	m_width(width),
+	m_height(height)
 {
 }
 
@@ -14,9 +16,10 @@ gef::Sprite Menu::GetSprite()
 void Menu::SetSprite(gef::Sprite sprite)
 {
 	m_sprite = sprite;
-	m_sprite.set_position(-250, -250, 0);
-	m_sprite.set_height(500);
-	m_sprite.set_width(500);
+	m_sprite.set_height(m_height);
+	m_sprite.set_width(m_width);
+	m_sprite.set_position(m_width / 2, m_height / 2, 0);
+	
 }
 
 

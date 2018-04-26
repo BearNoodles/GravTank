@@ -6,7 +6,7 @@
 class Player : public GameObject
 {
 public:
-	Player(b2World* world_, PrimitiveBuilder* builder, b2Vec2 startPos);
+	Player(b2World* world_, PrimitiveBuilder* builder, b2Vec2 startPos, gef::Material* mat);
 	~Player();
 
 	void Update(float x, float y);
@@ -42,6 +42,8 @@ private:
 	float speed;
 	float bulletForce;
 
+	
+
 	bool playerRight;
 	bool playerLeft;
 
@@ -59,6 +61,8 @@ private:
 	b2Body* m_body;
 	b2World* m_world;
 	PrimitiveBuilder* m_builder;
+
+	gef::Material* m_material;
 
 	b2Vec2 startPosition;
 };
