@@ -2,11 +2,13 @@
 #include "game_object.h"
 #include "Bullet.h"
 #include <box2d/Box2D.h>
+#include "audio_3d.h"
+#include <audio/audio_manager.h>
 
 class Player : public GameObject
 {
 public:
-	Player(b2World* world_, PrimitiveBuilder* builder, b2Vec2 startPos, gef::Material* mat);
+	Player(b2World* world_, PrimitiveBuilder* builder, b2Vec2 startPos, Audio3D* audio, int shootID, int moveID);
 	~Player();
 
 	void Update(float x, float y);
@@ -33,7 +35,7 @@ public:
 	void SetTurretAngle(float radians);
 
 private:
-	void Init();
+	void InitBody();
 	int health;
 	int maxHealth;
 	void CreateBullet();
@@ -65,5 +67,15 @@ private:
 	gef::Material* m_material;
 
 	b2Vec2 startPosition;
+
+	AudioEmitter m_emitterShoot;
+	AudioEmitter m_emitterMove;
+	Audio3D* m_audio;
+	int sfx_id_shoot;
+	int sfx_id_move;
+
+	void InitAudio(Audio3D* audio, int shootID, int moveID);
+
+	void UpdateAudio();
 };
 

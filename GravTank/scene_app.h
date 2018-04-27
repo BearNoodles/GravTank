@@ -16,6 +16,9 @@
 #include "graphics\texture.h"
 #include "graphics\image_data.h"
 #include "assets\png_loader.h"
+#include <audio/audio_manager.h>
+#include "audio_3d.h"
+
 
 // FRAMEWORK FORWARD DECLARATIONS
 namespace gef
@@ -62,6 +65,7 @@ private:
 	void RightPressed();
 	void LeftPressed();
 	void StopPlayer();
+	void StartPressed();
 
 	PrimitiveBuilder* primitive_builder_;
 
@@ -122,6 +126,17 @@ private:
 	gef::Material* backMaterial;
 
 	gef::Sprite menuSprite;
+
+	gef::AudioManager* audio_manager_;
+
+	int sfx_id_;
+	int sfx_id_2;
+
+	Audio3D* audio_3d_;
+
+	void InitEmitters();
+	void InitListener();
+	void UpdateListener(float frame_time, float left_horizontal_input, float left_vertical_input, float right_horizontal_input, float right_vertical_input);
 };
 
 #endif // _SCENE_APP_H

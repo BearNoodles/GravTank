@@ -234,6 +234,9 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="audio_3d.cpp" />
+    <ClCompile Include="audio_emitter.cpp" />
+    <ClCompile Include="audio_listener.cpp" />
     <ClCompile Include="BodyObject.cpp" />
     <ClCompile Include="Bullet.cpp" />
     <ClCompile Include="Camera.cpp" />
@@ -246,6 +249,9 @@
     <ClInclude Include="..\..\game_object.h" />
     <ClInclude Include="..\..\primitive_builder.h" />
     <ClInclude Include="..\..\scene_app.h" />
+    <ClInclude Include="audio_3d.h" />
+    <ClInclude Include="audio_emitter.h" />
+    <ClInclude Include="audio_listener.h" />
     <ClInclude Include="BodyObject.h" />
     <ClInclude Include="Bullet.h" />
     <ClInclude Include="Camera.h" />

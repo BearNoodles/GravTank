@@ -18,7 +18,10 @@ SceneApp::SceneApp(gef::Platform& platform) :
 	font_(NULL),
 	world_(NULL),
 	toDel(NULL),
-	tex()
+	audio_manager_(NULL),
+	sfx_id_(-1),
+	sfx_id_2(-1),
+	audio_3d_(NULL)
 {
 }
 
@@ -27,26 +30,28 @@ void SceneApp::Init()
 	sprite_renderer_ = gef::SpriteRenderer::Create(platform_);
 	input_manager_ = platform_.CreateInputManager();
 
+	audio_manager_ = gef::AudioManager::Create();
+
 	// create the renderer for draw 3D geometry
 	renderer_3d_ = gef::Renderer3D::Create(platform_);
 
 	// initialise primitive builder to make create some 3D geometry easier
 	primitive_builder_ = new PrimitiveBuilder(platform_);
 
-	pngLoader.Load("face.png", platform_, img);
+	pngLoader.Load("fac.png", platform_, img);
 	tex = gef::Texture::Create(platform_, img);
 
 	//mat.set_colour(0xff0000ff);
 	mat.set_texture(tex);
 
-	pngLoader.Load("player.png", platform_, playerImage);
+	pngLoader.Load("fac.png", platform_, playerImage);
 	playerTexture = gef::Texture::Create(platform_, playerImage);
 
 	playerMaterial = new gef::Material();
 	//mat.set_colour(0xff0000ff);
 	playerMaterial->set_texture(playerTexture);
 
-	pngLoader.Load("player.png", platform_, enemyImage);
+	pngLoader.Load("fac.png", platform_, enemyImage);
 	enemyTexture = gef::Texture::Create(platform_, enemyImage);
 	enemyMaterial = new gef::Material();
 	//mat.set_colour(0xff0000ff);
@@ -57,13 +62,20 @@ void SceneApp::Init()
 	screenHeight = 544;
 	screenWidth = 960;
 
+	if (audio_manager_)
+	{
+		sfx_id_ = audio_manager_->LoadSample("alien.wav", platform_);
+		sfx_id_2 = audio_manager_->LoadSample("hum.wav", platform_);
+	}
+
 	// initialise the physics world
 	gravityAmount = 9.81f;
 	b2Vec2 gravity(0.0f, -gravityAmount);
 	world_ = new b2World(gravity);
 	gameManager = new GameManager(world_, primitive_builder_);
 	gameManager->LoadLevel();
-	player = new Player(world_, primitive_builder_, gameManager->GetStartPosition(), playerMaterial);
+	audio_3d_ = new Audio3D(audio_manager_);
+	player = new Player(world_, primitive_builder_, gameManager->GetStartPosition(), audio_3d_, sfx_id_, sfx_id_2);
 	playerSpeed = 6;
 	InitGround();
 	InitBuildings();
@@ -76,6 +88,7 @@ void SceneApp::Init()
 	InitFont();
 	InitHealthSprite();
 	SetupLights();
+
 }
 
 void SceneApp::CleanUp()
@@ -110,6 +123,21 @@ void SceneApp::CleanUp()
 	delete player;
 	player = NULL;
 
+	delete audio_3d_;
+	audio_3d_ = NULL;
+
+	// free up audio assets
+	if (audio_manager_)
+	{
+		if (sfx_id_ != -1)
+			audio_manager_->UnloadSample(sfx_id_);
+		if (sfx_id_2 != -1)
+			audio_manager_->UnloadSample(sfx_id_2);
+	}
+
+	delete audio_manager_;
+	audio_manager_ = NULL;
+
 }
 
 bool SceneApp::Update(float frame_time)
@@ -120,8 +148,8 @@ bool SceneApp::Update(float frame_time)
 	{
 		input_manager_->Update();
 
-		ProcessKeyboardInput();
-		//ProcessControllerInput();
+		//ProcessKeyboardInput();
+		ProcessControllerInput();
 	}
 
 	switch (gameManager->GetState())
@@ -135,6 +163,8 @@ bool SceneApp::Update(float frame_time)
 			UpdatePlaying();
 			break;
 	}
+
+	audio_3d_->Update();
 
 	
 
@@ -307,6 +337,14 @@ void SceneApp::ProcessControllerInput()
 		const gef::SonyController* controller = controller_input->GetController(0);
 		if (controller)
 		{
+			if (gameManager->GetState() == MENU)
+			{
+				if (controller->buttons_pressed() & gef_SONY_CTRL_START)
+				{
+					gameManager->SetState(PLAYING);
+				}
+			}
+
 			// check for button presses and print out some debug text
 			if (controller->buttons_pressed() & gef_SONY_CTRL_CROSS)
 				gef::DebugOut("CROSS pressed\n");
@@ -767,3 +805,4 @@ void SceneApp::StopPlayer()
 	}
 	
 }
+

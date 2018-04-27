@@ -2,15 +2,14 @@
 
 
 
-Player::Player(b2World* world, PrimitiveBuilder* builder, b2Vec2 startPos, gef::Material* mat) :
+Player::Player(b2World* world, PrimitiveBuilder* builder, b2Vec2 startPos, Audio3D* audio, int shootID, int moveID) :
 	m_world(world),
 	m_builder(builder),
 	bullet(NULL)
 {
 	startPosition = startPos;
-	m_material = mat;
-	turretRot = 0;
-	Init();
+	InitBody();
+	InitAudio(audio, shootID, moveID);
 	CreateBullet();
 	CreateTurret();
 	canShoot = true;
@@ -20,7 +19,7 @@ Player::Player(b2World* world, PrimitiveBuilder* builder, b2Vec2 startPos, gef::
 	health = maxHealth;
 }
 
-void Player::Init()
+void Player::InitBody()
 {
 	speed = 6.0f;
 
@@ -56,6 +55,27 @@ void Player::Init()
 
 	// update visuals from simulation data
 	UpdateFromSimulation(m_body);
+
+
+}
+
+void Player::InitAudio(Audio3D* audio, int shootID, int moveID)
+{
+
+	sfx_id_shoot = shootID;
+	sfx_id_move = moveID;
+
+	m_audio = audio;
+	m_emitterShoot.Init(sfx_id_shoot, true);
+	m_emitterMove.Init(sfx_id_move, true);
+	m_emitterShoot.set_radius(1.0f);
+	m_emitterMove.set_radius(1.0f);
+
+	m_emitterShoot.set_position(gef::Vector4(GetPosition().x, GetPosition().y, 0));
+	m_emitterMove.set_position(gef::Vector4(GetPosition().x, GetPosition().y, 0));
+
+	m_audio->AddEmitter(m_emitterShoot);
+	m_audio->AddEmitter(m_emitterShoot);
 }
 
 void Player::CreateBullet()
@@ -67,6 +87,7 @@ void Player::CreateBullet()
 
 void Player::CreateTurret()
 {
+	turretRot = 0;
 	gef::Vector4 halfSize(0.125f, 0.5f, 0);
 	turret = new GameObject();
 	turret->set_mesh(m_builder->CreateBoxMesh(halfSize));
@@ -131,6 +152,8 @@ void Player::Update(float x, float y)
 	stickY = y;
 	turretRot = b2Atan2(stickX, stickY);;
 	PositionTurret(stickX, stickY);
+
+	UpdateAudio();
 	
 	//turret->UpdateFromSimulation(m_turretBody);
 	//if (bullet != NULL && !canShoot)
@@ -144,6 +167,24 @@ void Player::Update(float x, float y)
 	//		}
 	//	}
 	//}
+}
+
+void Player::UpdateAudio()
+{
+	gef::Vector4 emitterShoot_translation(m_body->GetPosition().x, m_body->GetPosition().y, 0.0f);
+
+	m_emitterShoot.set_position(emitterShoot_translation);
+
+	gef::Vector4 emitterMove_translation(m_body->GetPosition().x, m_body->GetPosition().y, 0.0f);
+
+	m_emitterMove.set_position(emitterMove_translation);
+
+
+	gef::Vector4 listener_translation(m_body->GetPosition().x, m_body->GetPosition().y, 0.0f);
+	// build object transformation matrix
+	gef::Matrix44 listener_transform;
+	listener_transform.SetTranslation(listener_translation);
+	m_audio->listener().SetTransform(listener_transform);
 }
 
 GameObject* Player::GetTurret()
