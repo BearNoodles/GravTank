@@ -21,7 +21,7 @@ enum GameState
 class GameManager
 {
 public:
-	GameManager(b2World* world_, PrimitiveBuilder* builder);
+	GameManager(b2World* world_, PrimitiveBuilder* builder, gef::AudioManager* audioManager, int shootID, int moveID);
 	~GameManager();
 
 	void LoadLevel();
@@ -55,6 +55,12 @@ private:
 	int enemyCount;
 	int enemiesAlive;
 	Enemy* enemies[15];
+
+	gef::AudioManager* m_audioManager;
+	int sfx_id_shoot;
+	int sfx_id_move;
+	int voice_id_shoot;
+	int voice_id_move;
 
 	void SetBlockNull(int i, int j);
 

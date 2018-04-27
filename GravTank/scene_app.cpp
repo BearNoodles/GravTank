@@ -20,8 +20,7 @@ SceneApp::SceneApp(gef::Platform& platform) :
 	toDel(NULL),
 	audio_manager_(NULL),
 	sfx_id_(-1),
-	sfx_id_2(-1),
-	audio_3d_(NULL)
+	sfx_id_2(-1)
 {
 }
 
@@ -57,25 +56,26 @@ void SceneApp::Init()
 	//mat.set_colour(0xff0000ff);
 	enemyMaterial->set_texture(enemyTexture);
 
-	rightStickY = 1;
+	rightStickX = 0;
+	rightStickY = -1;
 
 	screenHeight = 544;
 	screenWidth = 960;
 
 	if (audio_manager_)
 	{
-		sfx_id_ = audio_manager_->LoadSample("alien.wav", platform_);
-		sfx_id_2 = audio_manager_->LoadSample("hum.wav", platform_);
+		sfx_id_ = audio_manager_->LoadSample("pew.wav", platform_);
+		sfx_id_2 = audio_manager_->LoadSample("print.wav", platform_);
+		audio_manager_->LoadMusic("music.wav", platform_);
 	}
 
 	// initialise the physics world
 	gravityAmount = 9.81f;
 	b2Vec2 gravity(0.0f, -gravityAmount);
 	world_ = new b2World(gravity);
-	gameManager = new GameManager(world_, primitive_builder_);
+	gameManager = new GameManager(world_, primitive_builder_, audio_manager_, sfx_id_, sfx_id_2);
 	gameManager->LoadLevel();
-	audio_3d_ = new Audio3D(audio_manager_);
-	player = new Player(world_, primitive_builder_, gameManager->GetStartPosition(), audio_3d_, sfx_id_, sfx_id_2);
+	player = new Player(world_, primitive_builder_, gameManager->GetStartPosition(), audio_manager_, sfx_id_, sfx_id_2);
 	playerSpeed = 6;
 	InitGround();
 	InitBuildings();
@@ -89,6 +89,11 @@ void SceneApp::Init()
 	InitHealthSprite();
 	SetupLights();
 
+	gef::VolumeInfo volumeInfo;
+	volumeInfo.volume = 0.2f;
+	audio_manager_->SetMusicVolumeInfo(volumeInfo);
+
+	audio_manager_->PlayMusic();
 }
 
 void SceneApp::CleanUp()
@@ -123,9 +128,6 @@ void SceneApp::CleanUp()
 	delete player;
 	player = NULL;
 
-	delete audio_3d_;
-	audio_3d_ = NULL;
-
 	// free up audio assets
 	if (audio_manager_)
 	{
@@ -133,6 +135,7 @@ void SceneApp::CleanUp()
 			audio_manager_->UnloadSample(sfx_id_);
 		if (sfx_id_2 != -1)
 			audio_manager_->UnloadSample(sfx_id_2);
+		audio_manager_->UnloadMusic();
 	}
 
 	delete audio_manager_;
@@ -143,6 +146,10 @@ void SceneApp::CleanUp()
 bool SceneApp::Update(float frame_time)
 {
 	fps_ = 1.0f / frame_time;
+
+	playerSpeed = 6 * 60.0f / fps_;
+
+	gravityAmount = 9.81f * 60.0f / fps_;
 
 	if (input_manager_)
 	{
@@ -160,13 +167,9 @@ bool SceneApp::Update(float frame_time)
 			UpdateMenu();
 			break;
 		case PLAYING:
-			UpdatePlaying();
+			UpdatePlaying(frame_time);
 			break;
 	}
-
-	audio_3d_->Update();
-
-	
 
 	return true;
 }
@@ -176,7 +179,7 @@ void SceneApp::UpdateMenu()
 
 }
 
-void SceneApp::UpdatePlaying()
+void SceneApp::UpdatePlaying(float frame_time)
 {
 	// update physics world
 	float32 timeStep = 1.0f / 60.0f;
@@ -187,7 +190,7 @@ void SceneApp::UpdatePlaying()
 	world_->Step(timeStep, velocityIterations, positionIterations);
 
 	// update object visuals from simulation data
-	player->Update(rightStickX, rightStickY);
+	player->Update(rightStickX, rightStickY, frame_time);
 
 	
 
@@ -373,11 +376,13 @@ void SceneApp::ProcessControllerInput()
 			if (controller->left_stick_x_axis() >= 0.3f)
 			{
 				RightPressed();
+				player->SetMoveSound(true);
 			}
 
 			else if (controller->left_stick_x_axis() <= -0.3f)
 			{
 				LeftPressed();
+				player->SetMoveSound(true);
 			}
 
 			else
@@ -390,7 +395,7 @@ void SceneApp::ProcessControllerInput()
 				{
 					player->SetVelocity(b2Vec2(player->GetVelocity().x, 0.0f));
 				}
-
+				player->SetMoveSound(false);
 
 				if (!camera.GetRotating())
 				{
@@ -715,7 +720,7 @@ void SceneApp::RightPressed()
 			world_->SetGravity(b2Vec2(-gravityAmount * camera.GetCameraUp().x(), -gravityAmount * camera.GetCameraUp().y()));
 		}
 	}
-	else if (b2Abs(player->GetVelocity().x) < 0.1f && b2Abs(player->GetVelocity().y) < 0.1f && player->GetPlayerRight())
+	else if (b2Abs(player->GetVelocity().x) < 0.01f && b2Abs(player->GetVelocity().y) < 0.01f && player->GetPlayerRight())
 	{
 		//rotate
 		camera.SetRotating(true);
@@ -762,7 +767,7 @@ void SceneApp::LeftPressed()
 			world_->SetGravity(b2Vec2(-gravityAmount * camera.GetCameraUp().x(), -gravityAmount * camera.GetCameraUp().y()));
 		}
 	}
-	else if (b2Abs(player->GetVelocity().x) < 0.1f && b2Abs(player->GetVelocity().y) < 0.1f && player->GetPlayerLeft())
+	else if (b2Abs(player->GetVelocity().x) < 0.01f && b2Abs(player->GetVelocity().y) < 0.01f && player->GetPlayerLeft())
 	{
 		//rotate
 		camera.SetRotating(true);

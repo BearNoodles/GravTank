@@ -17,7 +17,6 @@
 #include "graphics\image_data.h"
 #include "assets\png_loader.h"
 #include <audio/audio_manager.h>
-#include "audio_3d.h"
 
 
 // FRAMEWORK FORWARD DECLARATIONS
@@ -40,7 +39,7 @@ public:
 	void Init();
 	void CleanUp();
 	bool Update(float frame_time);
-	void UpdatePlaying();
+	void UpdatePlaying(float frame_time);
 	void UpdateMenu();
 	void Render();
 private:
@@ -131,12 +130,7 @@ private:
 
 	int sfx_id_;
 	int sfx_id_2;
-
-	Audio3D* audio_3d_;
-
-	void InitEmitters();
-	void InitListener();
-	void UpdateListener(float frame_time, float left_horizontal_input, float left_vertical_input, float right_horizontal_input, float right_vertical_input);
+	int sfx_id_3;
 };
 
 #endif // _SCENE_APP_H

@@ -2,7 +2,7 @@
 
 
 
-Enemy::Enemy(int type, b2World* world, PrimitiveBuilder* builder, b2Vec2 start) :
+Enemy::Enemy(int type, b2World* world, PrimitiveBuilder* builder, b2Vec2 start, gef::AudioManager* audioManager, int shootID, int moveID) :
 	m_world(world),
 	m_builder(builder),
 	bullet(NULL)
@@ -13,6 +13,11 @@ Enemy::Enemy(int type, b2World* world, PrimitiveBuilder* builder, b2Vec2 start) 
 	CreateBullet();
 	canShoot = true;
 	isDead = false;
+	m_audioManager = audioManager;
+	sfx_id_shoot = shootID;
+	sfx_id_move = moveID;
+	voice_id_shoot = -1;
+	voice_id_move = -1;
 }
 
 void Enemy::Init()
@@ -162,6 +167,7 @@ void Enemy::Shoot(b2Vec2 force)
 {
 	if (canShoot)
 	{
+		voice_id_shoot = m_audioManager->PlaySample(sfx_id_shoot);
 		canShoot = false;
 		bullet->Fire(force, m_body->GetPosition(), b2Vec2(0, 1.5f));
 	}
@@ -175,8 +181,13 @@ b2Vec2 Enemy::GetPosition()
 
 Enemy::~Enemy()
 {
+	if (voice_id_shoot != -1)
+		m_audioManager->StopPlayingSampleVoice(voice_id_shoot);
+	if (voice_id_move != -1)
+		m_audioManager->StopPlayingSampleVoice(voice_id_shoot);
 	m_world->DestroyBody(m_body);
 	m_body = NULL;
 	delete mesh_;
 	mesh_ = NULL;
+	m_audioManager = NULL;
 }

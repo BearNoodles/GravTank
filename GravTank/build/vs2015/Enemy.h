@@ -3,19 +3,19 @@
 #include "primitive_builder.h"
 #include "Bullet.h"
 #include "graphics\material.h"
+#include <audio/audio_manager.h>
 
 
 class Enemy : public GameObject
 {
 public:
-	Enemy(int type, b2World* world_, PrimitiveBuilder* builder, b2Vec2 startPosition);
+	Enemy(int type, b2World* world_, PrimitiveBuilder* builder, b2Vec2 startPosition, gef::AudioManager* audioManager, int shootID, int moveID);
 	~Enemy();
 	void Update(b2Vec2 gravity);
 	void Shoot(b2Vec2 force);
 	bool GetCanShoot();
 	gef::MeshInstance* GetBulletMesh();
 	b2Vec2 GetPosition();
-	void BulletCollision();
 	void Die();
 	bool GetDead();
 
@@ -39,5 +39,11 @@ private:
 	b2Body* m_body;
 	b2World* m_world;
 	PrimitiveBuilder* m_builder;
+
+	gef::AudioManager* m_audioManager;
+	int sfx_id_shoot;
+	int sfx_id_move;
+	int voice_id_shoot;
+	int voice_id_move;
 };
 

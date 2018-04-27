@@ -3,13 +3,18 @@
 
 
 
-GameManager::GameManager(b2World* world, PrimitiveBuilder* builder) :
+GameManager::GameManager(b2World* world, PrimitiveBuilder* builder, gef::AudioManager* audioManager, int shootID, int moveID) :
 	m_world(world),
 	m_builder(builder)
 {
-	m_state = MENU;
+	m_state = PLAYING;
 	currentLevel = 3;
 	enemyCount = 0;
+	m_audioManager = audioManager;
+	sfx_id_shoot = shootID;
+	sfx_id_move = moveID;
+	voice_id_shoot = -1;
+	voice_id_move = -1;
 }
 
 void GameManager::NextLevel()
@@ -101,13 +106,13 @@ void GameManager::LoadLevel()
 
 				case 3:
 					SetBlockNull(i, j);
-					enemies[enemyCount] = new Enemy(3, m_world, m_builder, b2Vec2((4 * j), (4 * -i)));
+					enemies[enemyCount] = new Enemy(3, m_world, m_builder, b2Vec2((4 * j), (4 * -i)), m_audioManager, sfx_id_shoot, sfx_id_move);
 					enemyCount++;
 					break;
 
 				case 4:
 					SetBlockNull(i, j);
-					enemies[enemyCount] = new Enemy(4, m_world, m_builder, b2Vec2((4 * j), (4 * -i)));
+					enemies[enemyCount] = new Enemy(4, m_world, m_builder, b2Vec2((4 * j), (4 * -i)), m_audioManager, sfx_id_shoot, sfx_id_move);
 					enemyCount++;
 					break;
 
@@ -116,13 +121,13 @@ void GameManager::LoadLevel()
 					//levelBlocks[i][j].blockObject = NULL;
 					levelBlocks[i][j].blockBody = NULL;
 					levelBlocks[i][j].blockMesh = NULL;
-					enemies[enemyCount] = new Enemy(5, m_world, m_builder, b2Vec2((4 * j), (4 * -i)));
+					enemies[enemyCount] = new Enemy(5, m_world, m_builder, b2Vec2((4 * j), (4 * -i)), m_audioManager, sfx_id_shoot, sfx_id_move);
 					enemyCount++;
 					break;
 
 				case 6:
 					SetBlockNull(i, j);
-					enemies[enemyCount] = new Enemy(6, m_world, m_builder, b2Vec2((4 * j), (4 * -i)));
+					enemies[enemyCount] = new Enemy(6, m_world, m_builder, b2Vec2((4 * j), (4 * -i)), m_audioManager, sfx_id_shoot, sfx_id_move);
 					enemyCount++;
 					break;
 			}

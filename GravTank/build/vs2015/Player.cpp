@@ -2,14 +2,18 @@
 
 
 
-Player::Player(b2World* world, PrimitiveBuilder* builder, b2Vec2 startPos, Audio3D* audio, int shootID, int moveID) :
+Player::Player(b2World* world, PrimitiveBuilder* builder, b2Vec2 startPos, gef::AudioManager* audioManager, int shootID, int moveID) :
 	m_world(world),
 	m_builder(builder),
 	bullet(NULL)
 {
 	startPosition = startPos;
 	InitBody();
-	InitAudio(audio, shootID, moveID);
+	sfx_id_shoot = shootID;
+	sfx_id_move = moveID;
+	voice_id_shoot = -1;
+	voice_id_move = -1;
+	m_audioManager = audioManager;
 	CreateBullet();
 	CreateTurret();
 	canShoot = true;
@@ -59,25 +63,6 @@ void Player::InitBody()
 
 }
 
-void Player::InitAudio(Audio3D* audio, int shootID, int moveID)
-{
-
-	sfx_id_shoot = shootID;
-	sfx_id_move = moveID;
-
-	m_audio = audio;
-	m_emitterShoot.Init(sfx_id_shoot, true);
-	m_emitterMove.Init(sfx_id_move, true);
-	m_emitterShoot.set_radius(1.0f);
-	m_emitterMove.set_radius(1.0f);
-
-	m_emitterShoot.set_position(gef::Vector4(GetPosition().x, GetPosition().y, 0));
-	m_emitterMove.set_position(gef::Vector4(GetPosition().x, GetPosition().y, 0));
-
-	m_audio->AddEmitter(m_emitterShoot);
-	m_audio->AddEmitter(m_emitterShoot);
-}
-
 void Player::CreateBullet()
 {
 	bullet = new Bullet(m_body->GetPosition(), m_world, m_builder);
@@ -110,9 +95,39 @@ void Player::PositionTurret(float x, float y)
 	// build object transformation matrix
 	gef::Matrix44 object_transform = object_rotation;
 	object_transform.SetTranslation(object_translation);
-	turret->set_transform(object_transform);;
+	turret->set_transform(object_transform);
 }
 
+
+
+void Player::Update(float x, float y, float frame_time)
+{
+	m_frameTime = frame_time;
+	UpdateFromSimulation(m_body);
+	bullet->Update();
+	if (!bullet->GetBody()->IsActive())
+	{
+		canShoot = true;
+	}
+	stickX = x;
+	stickY = y;
+	turretRot = b2Atan2(stickX, stickY);;
+	PositionTurret(stickX, stickY);
+
+	
+	//turret->UpdateFromSimulation(m_turretBody);
+	//if (bullet != NULL && !canShoot)
+	//{
+	//	if (bullet->GetBody()->IsActive())
+	//	{
+	//		if (bullet->GetBody()->GetContactList() != NULL)
+	//		{
+	//			//bullet->Reset();
+	//			canShoot = true;
+	//		}
+	//	}
+	//}
+}
 int Player::GetHealth()
 {
 	return health;
@@ -138,53 +153,6 @@ void Player::ResetPlayer(b2Vec2 startPos)
 	SetHealth(maxHealth);
 	SetPosition(startPos);
 	bullet->GetBody()->SetActive(false);
-}
-
-void Player::Update(float x, float y)
-{
-	UpdateFromSimulation(m_body);
-	bullet->Update();
-	if (!bullet->GetBody()->IsActive())
-	{
-		canShoot = true;
-	}
-	stickX = x;
-	stickY = y;
-	turretRot = b2Atan2(stickX, stickY);;
-	PositionTurret(stickX, stickY);
-
-	UpdateAudio();
-	
-	//turret->UpdateFromSimulation(m_turretBody);
-	//if (bullet != NULL && !canShoot)
-	//{
-	//	if (bullet->GetBody()->IsActive())
-	//	{
-	//		if (bullet->GetBody()->GetContactList() != NULL)
-	//		{
-	//			//bullet->Reset();
-	//			canShoot = true;
-	//		}
-	//	}
-	//}
-}
-
-void Player::UpdateAudio()
-{
-	gef::Vector4 emitterShoot_translation(m_body->GetPosition().x, m_body->GetPosition().y, 0.0f);
-
-	m_emitterShoot.set_position(emitterShoot_translation);
-
-	gef::Vector4 emitterMove_translation(m_body->GetPosition().x, m_body->GetPosition().y, 0.0f);
-
-	m_emitterMove.set_position(emitterMove_translation);
-
-
-	gef::Vector4 listener_translation(m_body->GetPosition().x, m_body->GetPosition().y, 0.0f);
-	// build object transformation matrix
-	gef::Matrix44 listener_transform;
-	listener_transform.SetTranslation(listener_translation);
-	m_audio->listener().SetTransform(listener_transform);
 }
 
 GameObject* Player::GetTurret()
@@ -214,10 +182,11 @@ void Player::SetCanShoot(bool value)
 
 void Player::Shoot(b2Vec2 force)
 {
-	b2Vec2 norms(stickX, stickY);
-	norms.Normalize();
 	if (canShoot)
 	{
+		voice_id_shoot = m_audioManager->PlaySample(sfx_id_shoot);
+		b2Vec2 norms(stickX, stickY);
+		norms.Normalize();
 		bullet->Fire(force, m_body->GetPosition(), b2Vec2(norms.x * 1.5f, -norms.y * 1.5f));
 		canShoot = false;
 	}
@@ -261,6 +230,19 @@ void Player::SetPlayerRight(bool value)
 void Player::SetPlayerLeft(bool value)
 {
 	playerLeft = value;
+}
+
+void Player::SetMoveSound(bool play)
+{
+	if (play && voice_id_move == -1)
+	{
+		voice_id_move = m_audioManager->PlaySample(sfx_id_move, true);
+	}
+	else if (!play && voice_id_move != -1)
+	{
+		m_audioManager->StopPlayingSampleVoice(voice_id_move);
+		voice_id_move = -1;
+	}
 }
 
 Player::~Player()
