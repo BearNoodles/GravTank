@@ -7,9 +7,10 @@ GameManager::GameManager(b2World* world, PrimitiveBuilder* builder, gef::AudioMa
 	m_world(world),
 	m_builder(builder)
 {
-	m_state = PLAYING;
+	m_state = MENU;
 	currentLevel = 3;
 	enemyCount = 0;
+	m_difficulty = 1;
 	m_audioManager = audioManager;
 	sfx_id_shoot = shootID;
 	sfx_id_move = moveID;
@@ -130,6 +131,46 @@ void GameManager::LoadLevel()
 					enemies[enemyCount] = new Enemy(6, m_world, m_builder, b2Vec2((4 * j), (4 * -i)), m_audioManager, sfx_id_shoot, sfx_id_move);
 					enemyCount++;
 					break;
+				case 7:
+					if (m_difficulty > 1)
+					{
+						SetBlockNull(i, j);
+						enemies[enemyCount] = new Enemy(3, m_world, m_builder, b2Vec2((4 * j), (4 * -i)), m_audioManager, sfx_id_shoot, sfx_id_move);
+						enemyCount++;
+					}
+					else
+						SetBlockNull(i, j);
+					break;
+				case 8:
+					if (m_difficulty > 1)
+					{
+						SetBlockNull(i, j);
+						enemies[enemyCount] = new Enemy(4, m_world, m_builder, b2Vec2((4 * j), (4 * -i)), m_audioManager, sfx_id_shoot, sfx_id_move);
+						enemyCount++;
+					}
+					else
+						SetBlockNull(i, j);
+					break;
+				case 9:
+					if (m_difficulty > 1)
+					{
+						SetBlockNull(i, j);
+						enemies[enemyCount] = new Enemy(5, m_world, m_builder, b2Vec2((4 * j), (4 * -i)), m_audioManager, sfx_id_shoot, sfx_id_move);
+						enemyCount++;
+					}
+					else
+						SetBlockNull(i, j);
+					break;
+				case 10:
+					if (m_difficulty > 1)
+					{
+						SetBlockNull(i, j);
+						enemies[enemyCount] = new Enemy(6, m_world, m_builder, b2Vec2((4 * j), (4 * -i)), m_audioManager, sfx_id_shoot, sfx_id_move);
+						enemyCount++;
+					}
+					else 
+						SetBlockNull(i, j);
+					break;
 			}
 		}
 	}
@@ -227,6 +268,20 @@ GameState GameManager::GetState()
 void GameManager::SetState(GameState state)
 {
 	m_state = state;
+}
+
+void GameManager::ChangeDifficulty()
+{
+	m_difficulty++;
+	if (m_difficulty > 3)
+	{
+		m_difficulty = 1;
+	}
+}
+
+int GameManager::GetDifficulty()
+{
+	return m_difficulty;
 }
 
 void GameManager::RenderLevel()

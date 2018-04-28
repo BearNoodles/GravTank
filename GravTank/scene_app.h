@@ -110,7 +110,7 @@ private:
 	
 	gef::ImageData img;
 	gef::Texture* tex;
-	gef::Material mat;
+	gef::Material* mat;
 
 	gef::ImageData playerImage;
 	gef::Texture* playerTexture;
@@ -120,11 +120,33 @@ private:
 	gef::Texture* enemyTexture;
 	gef::Material* enemyMaterial;
 
+	gef::ImageData tileImage;
+	gef::Texture* tileTexture;
+	gef::Material* tileMaterial;
+
 	gef::ImageData backImage;
 	gef::Texture* backTexture;
 	gef::Material* backMaterial;
+	gef::Sprite backSprite;
 
+	void DrawBack();
+
+	gef::ImageData menuImage;
+	gef::Texture* menuTexture;
+	gef::Material* menuMaterial;
 	gef::Sprite menuSprite;
+
+	gef::ImageData triImage;
+	gef::Texture* triTexture;
+	gef::Material* triMaterial;
+	gef::Sprite triSprite;
+
+	gef::ImageData startImage;
+	gef::Texture* startTexture;
+	gef::Material* startMaterial;
+	gef::Sprite startSprite;
+
+	void DrawMenu();
 
 	gef::AudioManager* audio_manager_;
 

@@ -37,24 +37,31 @@ void SceneApp::Init()
 	// initialise primitive builder to make create some 3D geometry easier
 	primitive_builder_ = new PrimitiveBuilder(platform_);
 
-	pngLoader.Load("fac.png", platform_, img);
+	pngLoader.Load("unwhite.png", platform_, img);
 	tex = gef::Texture::Create(platform_, img);
+	//tex->Create(platform_, img);
 
+	mat = new gef::Material();
 	//mat.set_colour(0xff0000ff);
-	mat.set_texture(tex);
+	mat->set_texture(tex);
 
 	pngLoader.Load("fac.png", platform_, playerImage);
 	playerTexture = gef::Texture::Create(platform_, playerImage);
-
 	playerMaterial = new gef::Material();
-	//mat.set_colour(0xff0000ff);
+	//playerMaterial.set_colour(0xff0000ff);
 	playerMaterial->set_texture(playerTexture);
 
-	pngLoader.Load("fac.png", platform_, enemyImage);
+	pngLoader.Load("enemy.png", platform_, enemyImage);
 	enemyTexture = gef::Texture::Create(platform_, enemyImage);
 	enemyMaterial = new gef::Material();
-	//mat.set_colour(0xff0000ff);
+	//enemyMaterial.set_colour(0xff0000ff);
 	enemyMaterial->set_texture(enemyTexture);
+
+	pngLoader.Load("tile.png", platform_, tileImage);
+	tileTexture = gef::Texture::Create(platform_, tileImage);
+	tileMaterial = new gef::Material();
+	//tileMaterial.set_colour(0xff0000ff);
+	tileMaterial->set_texture(tileTexture);
 
 	rightStickX = 0;
 	rightStickY = -1;
@@ -80,20 +87,37 @@ void SceneApp::Init()
 	InitGround();
 	InitBuildings();
 
+	pngLoader.Load("background.png", platform_, backImage);
+	backTexture = gef::Texture::Create(platform_, backImage);
+	backMaterial = new gef::Material();
+	//mat.set_colour(0xff0000ff);
+	backMaterial->set_texture(backTexture);
+	backSprite.set_texture(backTexture);
+	backSprite.set_height(60);
+	backSprite.set_width(60);
+	backSprite.set_position(gef::Vector4(0, 0, 1));
+	
+
+	pngLoader.Load("menuBack.png", platform_, menuImage);
+	menuTexture = gef::Texture::Create(platform_, menuImage);
+	menuMaterial = new gef::Material();
+	//mat.set_colour(0xff0000ff);
+	menuMaterial->set_texture(menuTexture);
+
 	menu = new Menu(screenWidth, screenHeight);
 	
-	menuSprite.set_texture(tex);
+	menuSprite.set_texture(menuTexture);
 	menu->SetSprite(menuSprite);
 
 	InitFont();
 	InitHealthSprite();
 	SetupLights();
 
-	gef::VolumeInfo volumeInfo;
-	volumeInfo.volume = 0.2f;
-	audio_manager_->SetMusicVolumeInfo(volumeInfo);
+	//gef::VolumeInfo volumeInfo;
+	//volumeInfo.volume = 0.2f;
+	//audio_manager_->SetMusicVolumeInfo(volumeInfo);
 
-	audio_manager_->PlayMusic();
+	//audio_manager_->PlayMusic();
 }
 
 void SceneApp::CleanUp()
@@ -155,8 +179,8 @@ bool SceneApp::Update(float frame_time)
 	{
 		input_manager_->Update();
 
-		//ProcessKeyboardInput();
-		ProcessControllerInput();
+		ProcessKeyboardInput();
+		//ProcessControllerInput();
 	}
 
 	switch (gameManager->GetState())
@@ -345,6 +369,14 @@ void SceneApp::ProcessControllerInput()
 				if (controller->buttons_pressed() & gef_SONY_CTRL_START)
 				{
 					gameManager->SetState(PLAYING);
+					gameManager->Reset();
+					gameManager->LoadLevel();
+					player->ResetPlayer(gameManager->GetStartPosition());
+				}
+
+				if (controller->buttons_pressed() & gef_SONY_CTRL_TRIANGLE)
+				{
+					gameManager->ChangeDifficulty();
 				}
 			}
 
@@ -429,6 +461,14 @@ void SceneApp::ProcessKeyboardInput()
 			if (keyboard->IsKeyDown(gef::Keyboard::KC_RETURN))
 			{
 				gameManager->SetState(PLAYING);
+				gameManager->Reset();
+				gameManager->LoadLevel();
+				player->ResetPlayer(gameManager->GetStartPosition());
+			}
+			
+			if (keyboard->IsKeyDown(gef::Keyboard::KC_C))
+			{
+				gameManager->ChangeDifficulty();
 			}
 		}
 		else
@@ -487,6 +527,7 @@ void SceneApp::Render()
 
 		sprite_renderer_->Begin(false);
 		sprite_renderer_->DrawSprite(menu->GetSprite());
+		DrawMenu();
 		sprite_renderer_->End();
 	}
 
@@ -502,8 +543,9 @@ void SceneApp::Render()
 		renderer_3d_->set_projection_matrix(projection_matrix);
 
 		// view
-		gef::Vector4 camera_eye(player->GetPosition().x, player->GetPosition().y, 30.0f);
-		gef::Vector4 camera_lookat(player->GetPosition().x, player->GetPosition().y, 0.0f);
+		int cameraHeight = 8;
+		gef::Vector4 camera_eye(player->GetPosition().x + (camera.GetCameraUp().x() * cameraHeight), player->GetPosition().y + (camera.GetCameraUp().y() * cameraHeight), 30.0f);
+		gef::Vector4 camera_lookat(player->GetPosition().x + (camera.GetCameraUp().x() * cameraHeight), player->GetPosition().y + (camera.GetCameraUp().y() * cameraHeight), 0.0f);
 
 		gef::Matrix44 view_matrix;
 		view_matrix.LookAt(camera_eye, camera_lookat, camera.GetCameraUp());
@@ -519,6 +561,7 @@ void SceneApp::Render()
 		renderer_3d_->DrawMesh(building);
 		renderer_3d_->DrawMesh(building2);
 
+		renderer_3d_->set_override_material(tileMaterial);
 		for (int i = 0; i < levelWidth; i++)
 		{
 			for (int j = 0; j < levelHeight; j++)
@@ -527,6 +570,7 @@ void SceneApp::Render()
 					renderer_3d_->DrawMesh(*gameManager->GetBlock(i, j));
 			}
 		}
+		renderer_3d_->set_override_material(NULL);
 
 		// draw player
 		renderer_3d_->set_override_material(NULL);
@@ -535,7 +579,7 @@ void SceneApp::Render()
 		renderer_3d_->set_override_material(NULL);
 
 		//rendenemy
-		renderer_3d_->set_override_material(NULL);
+		renderer_3d_->set_override_material(enemyMaterial);
 		for (int i = 0; i < gameManager->GetEnemyCount(); i++)
 		{
 			if (!gameManager->GetEnemy(i)->GetDead())
@@ -565,9 +609,50 @@ void SceneApp::Render()
 
 		// start drawing sprites, but don't clear the frame buffer
 		sprite_renderer_->Begin(false);
+		DrawBack();
 		DrawHUD();
 		sprite_renderer_->End();
 	}
+}
+
+void SceneApp::DrawHUD()
+{
+	if (font_)
+	{
+		// display frame rate
+		font_->RenderText(sprite_renderer_, gef::Vector4(850.0f, 510.0f, -0.9f), 1.0f, 0xffffffff, gef::TJ_LEFT, "FPS: %.1f", fps_);
+	}
+	for (int i = 0; i < player->GetHealth(); i++)
+	{
+		sprite_renderer_->DrawSprite(healths[i]);
+	}
+}
+
+void SceneApp::DrawMenu()
+{
+	char* difficulty;
+	switch (gameManager->GetDifficulty())
+	{
+		case 1:
+			difficulty = "easy";
+			break;
+		case 2:
+			difficulty = "normal";
+			break;
+		case 3:
+			difficulty = "hard";
+		break;
+	}
+	if (font_)
+	{
+		font_->RenderText(sprite_renderer_, gef::Vector4(320.0f, 305.0f, -0.9f), 2.0f, 0xff000000, gef::TJ_LEFT, "Begin");
+		font_->RenderText(sprite_renderer_, gef::Vector4(320.0f, 405.0f, -0.9f), 2.0f, 0xff000000, gef::TJ_LEFT, "Difficulty : %s", difficulty);
+	}
+}
+
+void SceneApp::DrawBack()
+{
+	sprite_renderer_->DrawSprite(backSprite);
 }
 
 
@@ -670,18 +755,7 @@ void SceneApp::CleanUpFont()
 	font_ = NULL;
 }
 
-void SceneApp::DrawHUD()
-{
-	if(font_)
-	{
-		// display frame rate
-		font_->RenderText(sprite_renderer_, gef::Vector4(850.0f, 510.0f, -0.9f), 1.0f, 0xffffffff, gef::TJ_LEFT, "FPS: %.1f", fps_);
-	}
-	for (int i = 0; i < player->GetHealth(); i++)
-	{
-		sprite_renderer_->DrawSprite(healths[i]);
-	}
-}
+
 
 void SceneApp::SetupLights()
 {
