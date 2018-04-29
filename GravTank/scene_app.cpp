@@ -92,10 +92,16 @@ void SceneApp::Init()
 	backMaterial = new gef::Material();
 	//mat.set_colour(0xff0000ff);
 	backMaterial->set_texture(backTexture);
-	backSprite.set_texture(backTexture);
-	backSprite.set_height(60);
-	backSprite.set_width(60);
-	backSprite.set_position(gef::Vector4(0, 0, 1));
+
+	//pngLoader.Load("black.png", platform_, blackImage);
+	//blackTexture = gef::Texture::Create(platform_, blackImage);
+	//blackMaterial = new gef::Material();
+	////mat.set_colour(0xff0000ff);
+	//blackMaterial->set_texture(blackTexture);
+	//blackSprite.set_texture(blackTexture);
+	//blackSprite.set_height(544);
+	//blackSprite.set_width(960);
+	//blackSprite.set_position(gef::Vector4(480, 272, 1));
 	
 
 	pngLoader.Load("menuBack.png", platform_, menuImage);
@@ -112,6 +118,7 @@ void SceneApp::Init()
 	InitFont();
 	InitHealthSprite();
 	SetupLights();
+
 
 	//gef::VolumeInfo volumeInfo;
 	//volumeInfo.volume = 0.2f;
@@ -553,13 +560,13 @@ void SceneApp::Render()
 
 		// draw 3d geometry
 		renderer_3d_->Begin();
-
 		// draw ground
 		renderer_3d_->DrawMesh(ground_);
 
 		//draw building
+		renderer_3d_->set_override_material(backMaterial);
 		renderer_3d_->DrawMesh(building);
-		renderer_3d_->DrawMesh(building2);
+		renderer_3d_->set_override_material(NULL);
 
 		renderer_3d_->set_override_material(tileMaterial);
 		for (int i = 0; i < levelWidth; i++)
@@ -652,7 +659,7 @@ void SceneApp::DrawMenu()
 
 void SceneApp::DrawBack()
 {
-	sprite_renderer_->DrawSprite(backSprite);
+	//sprite_renderer_->DrawSprite(blackSprite);
 }
 
 
@@ -691,43 +698,22 @@ void SceneApp::InitGround()
 void SceneApp::InitBuildings()
 {
 	// building dimensions
-	gef::Vector4 building_half_dimensions(1.0f, 1.0f, 0.5f);
+	gef::Vector4 building_half_dimensions(30.0f, 30.0f, 0.1f);
 
 	// setup the mesh for the buildings
 	buildingMesh = primitive_builder_->CreateBoxMesh(building_half_dimensions);
 	building.set_mesh(buildingMesh);
-	building2.set_mesh(buildingMesh);
+	
+	gef::Matrix44 object_rotation;
+	object_rotation.RotationZ(0);
 
-	// create physics bodies
-	b2BodyDef body_def;
-	body_def.type = b2_staticBody;
-	body_def.position = b2Vec2(4.0f, 1.0f);
+	// setup the object translation
+	gef::Vector4 object_translation(30.0f, -30.0f, -1.0f);
 
-	buildingBody = world_->CreateBody(&body_def);
-	body_def.position = b2Vec2(-4.0f, 1.0f);
-	buildingBody2 = world_->CreateBody(&body_def);
-
-	// create the shape
-	b2PolygonShape shape;
-	shape.SetAsBox(building_half_dimensions.x(), building_half_dimensions.y());
-
-	b2PolygonShape shape2;
-	shape2.SetAsBox(building_half_dimensions.x(), building_half_dimensions.y());
-
-	// create the fixture
-	b2FixtureDef fixture_def;
-	fixture_def.shape = &shape;
-
-	// create the fixtures on the rigid bodies
-	buildingBody->CreateFixture(&fixture_def);
-
-	buildingBody2->CreateFixture(&fixture_def);
-
-	//levelBuilder.LoadLevel(&platform_, *world_);
-
-	// update visuals from simulation data
-	building.UpdateFromSimulation(buildingBody);
-	building2.UpdateFromSimulation(buildingBody2);
+	// build object transformation matrix
+	gef::Matrix44 object_transform = object_rotation;
+	object_transform.SetTranslation(object_translation);
+	building.set_transform(object_transform);
 }
 
 
@@ -741,7 +727,7 @@ void SceneApp::InitHealthSprite()
 {
 	for (int i = 0; i < player->GetMaxHealth(); i++)
 	{
-		healths[i].set_position(gef::Vector4((40 * i) + 30, 30, 0));
+		healths[i].set_position(gef::Vector4((40 * i) + 30, 30, -1));
 		healths[i].set_height(30);
 		healths[i].set_width(30);
 		healths[i].set_colour(0xFF0000FF);

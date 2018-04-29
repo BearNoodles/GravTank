@@ -127,7 +127,11 @@ private:
 	gef::ImageData backImage;
 	gef::Texture* backTexture;
 	gef::Material* backMaterial;
-	gef::Sprite backSprite;
+
+	gef::ImageData blackImage;
+	gef::Texture* blackTexture;
+	gef::Material* blackMaterial;
+	gef::Sprite blackSprite;
 
 	void DrawBack();
 
