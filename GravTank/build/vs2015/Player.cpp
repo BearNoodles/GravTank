@@ -76,6 +76,12 @@ void Player::CreateBullet()
 void Player::CreateExplosion()
 {
 	explode = new Explosion(m_body->GetPosition(), m_world, m_builder);
+	explode->SetBulletType(EXPLOSION);
+}
+
+bool Player::IsExploding()
+{
+	return explode->IsActive();
 }
 
 void Player::CreateTurret()
@@ -112,6 +118,7 @@ void Player::Update(float x, float y, b2Vec2 up)
 {
 	UpdateFromSimulation(m_body);
 	bullet->Update();
+	explode->Update();
 	if (!bullet->GetBody()->IsActive())
 	{
 		canShoot = true;
@@ -225,13 +232,14 @@ void Player::Shoot(float shotScale)
 	}
 }
 
-void Player::Explosion()
+void Player::ExplodeBullet()
 {
 	if (!canShoot)
 	{
+		explode->Activate(bullet->GetBody()->GetPosition());
 		bullet->Reset();
 		canShoot = true;
-		explode->Activate(bullet->GetBody()->GetPosition());
+		
 	}
 }
 

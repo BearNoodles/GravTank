@@ -11,7 +11,7 @@ enum ObjectType
 
 enum BulletType
 {
-	NOBULLET, PLAYERBULLET, ENEMYBULLET
+	NOBULLET, PLAYERBULLET, ENEMYBULLET, EXPLOSION
 };
 
 class GameObject : public gef::MeshInstance

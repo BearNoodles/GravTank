@@ -9,7 +9,7 @@ Explosion::Explosion(b2Vec2 pos, b2World* world, PrimitiveBuilder* builder) :
 	SetBulletType(NOBULLET);
 	// setup the mesh
 
-	gef::Vector4 halfDimensions(1.0f, 1.0f, 0.01f);
+	gef::Vector4 halfDimensions(1.5f, 1.5f, 0.01f);
 	set_mesh(m_builder->CreateBoxMesh(halfDimensions));
 
 	// create a physics body
@@ -23,7 +23,7 @@ Explosion::Explosion(b2Vec2 pos, b2World* world, PrimitiveBuilder* builder) :
 
 	// create the shape
 	b2PolygonShape shape;
-	shape.SetAsBox(1.0f, 1.0f);
+	shape.SetAsBox(1.5f, 1.5f);
 
 	// create the fixture
 	b2FixtureDef fixture_def;
@@ -41,7 +41,7 @@ Explosion::Explosion(b2Vec2 pos, b2World* world, PrimitiveBuilder* builder) :
 
 	m_body->SetActive(false);
 
-	activeCount = 20;
+	activeCount = 8;
 	timer = 0;
 }
 
@@ -53,7 +53,6 @@ void Explosion::Update()
 		if (timer >= activeCount)
 		{
 			Reset();
-			timer = 0;
 		}
 		m_body->SetLinearVelocity(b2Vec2_zero);
 		UpdateFromSimulation(m_body);
@@ -62,10 +61,16 @@ void Explosion::Update()
 
 void Explosion::Activate(b2Vec2 pos)
 {
+	timer = 0;
 	m_body->SetTransform(pos, m_body->GetAngle());
 	m_body->SetActive(true);
 
 	m_body->SetLinearVelocity(b2Vec2_zero);
+}
+
+bool Explosion::IsActive()
+{
+	return m_body->IsActive();
 }
 
 void Explosion::Init()
@@ -85,10 +90,6 @@ void Explosion::Reset()
 	m_body->SetActive(false);
 }
 
-void Explosion::MyCollisionResponse()
-{
-
-}
 
 void Explosion::CleanUp()
 {

@@ -14,8 +14,6 @@ public:
 	void Update();
 	b2Body* GetBody();
 
-	void MyCollisionResponse() override;
-
 	void Fire(b2Vec2 force, b2Vec2 pos, b2Vec2 offset);
 
 	void Reset();

@@ -49,6 +49,12 @@ void SceneApp::Init()
 	//enemyMaterial.set_colour(0xff0000ff);
 	enemyMaterial->set_texture(enemyTexture);
 
+	pngLoader.Load("explode.png", platform_, explodeImage);
+	explodeTexture = gef::Texture::Create(platform_, explodeImage);
+	explodeMaterial = new gef::Material();
+	//enemyMaterial.set_colour(0xff0000ff);
+	explodeMaterial->set_texture(explodeTexture);
+
 
 	pngLoader.Load("tile.png", platform_, tileImage);
 	tileTexture = gef::Texture::Create(platform_, tileImage);
@@ -302,7 +308,7 @@ void SceneApp::UpdatePlaying(float frame_time)
 
 			if (playerTemp && bulletTemp)
 			{
-				if (bulletTemp->GetBulletType() == ENEMYBULLET)
+				if (bulletTemp->GetBulletType() == ENEMYBULLET || bulletTemp->GetBulletType() == EXPLOSION)
 				{
 					player->ReduceHealth();
 					bulletBody->SetActive(false);
@@ -322,7 +328,7 @@ void SceneApp::UpdatePlaying(float frame_time)
 			}
 			else if (enemyTemp && bulletTemp)
 			{
-				if (bulletTemp->GetBulletType() == PLAYERBULLET)
+				if (bulletTemp->GetBulletType() == PLAYERBULLET || bulletTemp->GetBulletType() == EXPLOSION)
 				{
 					gameManager->ReduceEnemyCount();
 					enemyBody->SetActive(false);
@@ -345,7 +351,8 @@ void SceneApp::UpdatePlaying(float frame_time)
 			}
 			else if (bulletTemp && tileTemp)
 			{
-				bulletBody->SetActive(false);
+				if (bulletTemp->GetBulletType() != EXPLOSION)
+					bulletBody->SetActive(false);
 				break;
 			}
 
@@ -403,7 +410,7 @@ void SceneApp::ProcessControllerInput()
 			}
 			if (controller->buttons_pressed() & gef_SONY_CTRL_L2)
 			{
-				player->Explosion();
+				player->ExplodeBullet();
 			}
 			if (controller->left_stick_x_axis() >= 0.3f)
 			{
@@ -602,13 +609,21 @@ void SceneApp::Render()
 				renderer_3d_->DrawMesh(*gameManager->GetEnemy(i)->GetBulletMesh());
 			}
 		}
+		renderer_3d_->set_override_material(NULL);
 
+		renderer_3d_->set_override_material(&primitive_builder_->green_material());
 		if (!player->GetCanShoot())
 		{
 			renderer_3d_->DrawMesh(*player->GetBulletMesh());
 		}
 		renderer_3d_->set_override_material(NULL);
 
+		renderer_3d_->set_override_material(explodeMaterial);
+		if (player->IsExploding())
+		{
+			renderer_3d_->DrawMesh(*player->GetExplosionMesh());
+		}
+		renderer_3d_->set_override_material(NULL);
 		renderer_3d_->End();
 
 		// start drawing sprites, but don't clear the frame buffer

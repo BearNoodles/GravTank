@@ -75,11 +75,6 @@ void Bullet::Reset()
 	m_body->SetActive(false);
 }
 
-void Bullet::MyCollisionResponse()
-{
-	
-}
-
 void Bullet::CleanUp()
 {
 	delete m_world;

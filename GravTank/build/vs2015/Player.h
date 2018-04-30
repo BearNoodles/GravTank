@@ -13,7 +13,7 @@ public:
 
 	void Update(float x, float y, b2Vec2 up);
 	void Shoot(float shotScale);
-	void Explosion();
+	void ExplodeBullet();
 	bool GetCanShoot();
 	void SetCanShoot(bool value);
 	gef::MeshInstance* GetBulletMesh();
@@ -33,7 +33,8 @@ public:
 	void ResetPlayer(b2Vec2 startPos);
 
 	void SetMoveSound(bool playing);
-	
+
+	bool IsExploding();
 	
 	GameObject* GetTurret();
 	void SetTurretAngle(float radians);

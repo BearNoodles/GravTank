@@ -120,6 +120,10 @@ private:
 	gef::Texture* enemyTexture;
 	gef::Material* enemyMaterial;
 
+	gef::ImageData explodeImage;
+	gef::Texture* explodeTexture;
+	gef::Material* explodeMaterial;
+
 	gef::ImageData tileImage;
 	gef::Texture* tileTexture;
 	gef::Material* tileMaterial;

@@ -12,9 +12,8 @@ public:
 	void Update();
 	b2Body* GetBody();
 
-	void MyCollisionResponse() override;
-
 	void Activate(b2Vec2 pos);
+	bool IsActive();
 
 	void Reset();
 
