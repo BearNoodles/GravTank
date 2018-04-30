@@ -1,6 +1,7 @@
 #pragma once
 #include "game_object.h"
 #include "Bullet.h"
+#include "Explosion.h"
 #include <box2d/Box2D.h>
 #include <audio/audio_manager.h>
 
@@ -10,11 +11,13 @@ public:
 	Player(b2World* world_, PrimitiveBuilder* builder, b2Vec2 startPos, gef::AudioManager* audioManager, int shootID, int moveID);
 	~Player();
 
-	void Update(float x, float y, float fps);
-	void Shoot(b2Vec2 force);
+	void Update(float x, float y, b2Vec2 up);
+	void Shoot(float shotScale);
+	void Explosion();
 	bool GetCanShoot();
 	void SetCanShoot(bool value);
 	gef::MeshInstance* GetBulletMesh();
+	gef::MeshInstance* GetExplosionMesh();
 	b2Vec2 GetPosition();
 	void SetPosition(b2Vec2);
 	b2Vec2 GetVelocity();
@@ -40,7 +43,9 @@ private:
 	int health;
 	int maxHealth;
 	void CreateBullet();
+	void CreateExplosion();
 	Bullet* bullet;
+	Explosion* explode;
 	bool canShoot;
 	float speed;
 	float bulletForce;

@@ -37,15 +37,7 @@ void SceneApp::Init()
 	// initialise primitive builder to make create some 3D geometry easier
 	primitive_builder_ = new PrimitiveBuilder(platform_);
 
-	pngLoader.Load("unwhite.png", platform_, img);
-	tex = gef::Texture::Create(platform_, img);
-	//tex->Create(platform_, img);
-
-	mat = new gef::Material();
-	//mat.set_colour(0xff0000ff);
-	mat->set_texture(tex);
-
-	pngLoader.Load("fac.png", platform_, playerImage);
+	pngLoader.Load("face.png", platform_, playerImage);
 	playerTexture = gef::Texture::Create(platform_, playerImage);
 	playerMaterial = new gef::Material();
 	//playerMaterial.set_colour(0xff0000ff);
@@ -56,6 +48,7 @@ void SceneApp::Init()
 	enemyMaterial = new gef::Material();
 	//enemyMaterial.set_colour(0xff0000ff);
 	enemyMaterial->set_texture(enemyTexture);
+
 
 	pngLoader.Load("tile.png", platform_, tileImage);
 	tileTexture = gef::Texture::Create(platform_, tileImage);
@@ -93,15 +86,15 @@ void SceneApp::Init()
 	//mat.set_colour(0xff0000ff);
 	backMaterial->set_texture(backTexture);
 
-	//pngLoader.Load("black.png", platform_, blackImage);
-	//blackTexture = gef::Texture::Create(platform_, blackImage);
-	//blackMaterial = new gef::Material();
-	////mat.set_colour(0xff0000ff);
-	//blackMaterial->set_texture(blackTexture);
+	pngLoader.Load("black.png", platform_, blackImage);
+	blackTexture = gef::Texture::Create(platform_, blackImage);
+	blackMaterial = new gef::Material();
+	//mat.set_colour(0xff0000ff);
+	blackMaterial->set_texture(blackTexture);
 	//blackSprite.set_texture(blackTexture);
 	//blackSprite.set_height(544);
 	//blackSprite.set_width(960);
-	//blackSprite.set_position(gef::Vector4(480, 272, 1));
+	//blackSprite.set_position(gef::Vector4(480, 272, 0));
 	
 
 	pngLoader.Load("menuBack.png", platform_, menuImage);
@@ -120,11 +113,11 @@ void SceneApp::Init()
 	SetupLights();
 
 
-	//gef::VolumeInfo volumeInfo;
-	//volumeInfo.volume = 0.2f;
-	//audio_manager_->SetMusicVolumeInfo(volumeInfo);
+	gef::VolumeInfo volumeInfo;
+	volumeInfo.volume = 0.2f;
+	audio_manager_->SetMusicVolumeInfo(volumeInfo);
 
-	//audio_manager_->PlayMusic();
+	audio_manager_->PlayMusic();
 }
 
 void SceneApp::CleanUp()
@@ -136,8 +129,8 @@ void SceneApp::CleanUp()
 	delete ground_mesh_;
 	ground_mesh_ = NULL;
 
-	delete buildingMesh;
-	buildingMesh = NULL;
+	delete backMesh2;
+	backMesh2 = NULL;
 
 	delete input_manager_;
 	input_manager_ = NULL;
@@ -182,12 +175,14 @@ bool SceneApp::Update(float frame_time)
 
 	gravityAmount = 9.81f * 60.0f / fps_;
 
+	shotForceScale = 60.0f / fps_;
+
 	if (input_manager_)
 	{
 		input_manager_->Update();
 
-		ProcessKeyboardInput();
-		//ProcessControllerInput();
+		//ProcessKeyboardInput();
+		ProcessControllerInput();
 	}
 
 	switch (gameManager->GetState())
@@ -221,7 +216,7 @@ void SceneApp::UpdatePlaying(float frame_time)
 	world_->Step(timeStep, velocityIterations, positionIterations);
 
 	// update object visuals from simulation data
-	player->Update(rightStickX, rightStickY, frame_time);
+	player->Update(rightStickX, rightStickY, b2Vec2(camera.GetCameraUp().x(), camera.GetCameraUp().y()));
 
 	
 
@@ -404,14 +399,12 @@ void SceneApp::ProcessControllerInput()
 				gef::DebugOut("CIRCLE pressed\n");
 			if (controller->buttons_pressed() & gef_SONY_CTRL_R2)
 			{
-				b2Vec2 shotForce(rightStickX, -rightStickY);
-				shotForce.Normalize();
-				shotForce = b2Vec2(shotForce.x * 200, shotForce.y * 200);
-				player->Shoot(shotForce);
+				player->Shoot(shotForceScale);
 			}
 			if (controller->buttons_pressed() & gef_SONY_CTRL_L2)
-				player->Shoot(b2Vec2(0, 100));
-
+			{
+				player->Explosion();
+			}
 			if (controller->left_stick_x_axis() >= 0.3f)
 			{
 				RightPressed();
@@ -496,7 +489,7 @@ void SceneApp::ProcessKeyboardInput()
 
 			if (keyboard->IsKeyDown(gef::Keyboard::KC_SPACE))
 			{
-				player->Shoot(b2Vec2(0, 100));
+				player->Shoot(shotForceScale);
 			}
 			if (keyboard->IsKeyDown(gef::Keyboard::KC_P))
 			{
@@ -565,7 +558,11 @@ void SceneApp::Render()
 
 		//draw building
 		renderer_3d_->set_override_material(backMaterial);
-		renderer_3d_->DrawMesh(building);
+		renderer_3d_->DrawMesh(back);
+		renderer_3d_->set_override_material(NULL);
+
+		renderer_3d_->set_override_material(blackMaterial);
+		renderer_3d_->DrawMesh(back2);
 		renderer_3d_->set_override_material(NULL);
 
 		renderer_3d_->set_override_material(tileMaterial);
@@ -580,7 +577,7 @@ void SceneApp::Render()
 		renderer_3d_->set_override_material(NULL);
 
 		// draw player
-		renderer_3d_->set_override_material(NULL);
+		renderer_3d_->set_override_material(playerMaterial);
 		renderer_3d_->DrawMesh(*player);
 		renderer_3d_->DrawMesh(*player->GetTurret());
 		renderer_3d_->set_override_material(NULL);
@@ -597,7 +594,7 @@ void SceneApp::Render()
 		renderer_3d_->set_override_material(NULL);
 
 		//
-		renderer_3d_->set_override_material(&primitive_builder_->blue_material());
+		renderer_3d_->set_override_material(&primitive_builder_->red_material());
 		for (int i = 0; i < gameManager->GetEnemyCount(); i++)
 		{
 			if (!gameManager->GetEnemy(i)->GetCanShoot())
@@ -698,22 +695,29 @@ void SceneApp::InitGround()
 void SceneApp::InitBuildings()
 {
 	// building dimensions
-	gef::Vector4 building_half_dimensions(30.0f, 30.0f, 0.1f);
+	gef::Vector4 back_half_dimensions(30.0f, 30.0f, 0.1f);
+	gef::Vector4 back_half_dimensions2(60.0f, 60.0f, 0.1f);
 
 	// setup the mesh for the buildings
-	buildingMesh = primitive_builder_->CreateBoxMesh(building_half_dimensions);
-	building.set_mesh(buildingMesh);
+	backMesh = primitive_builder_->CreateBoxMesh(back_half_dimensions);
+	back.set_mesh(backMesh);
+
+	backMesh2 = primitive_builder_->CreateBoxMesh(back_half_dimensions2);
+	back2.set_mesh(backMesh2);
 	
 	gef::Matrix44 object_rotation;
 	object_rotation.RotationZ(0);
 
 	// setup the object translation
 	gef::Vector4 object_translation(30.0f, -30.0f, -1.0f);
+	gef::Vector4 object_translation2(30.0f, -30.0f, -2.0f);
 
 	// build object transformation matrix
 	gef::Matrix44 object_transform = object_rotation;
 	object_transform.SetTranslation(object_translation);
-	building.set_transform(object_transform);
+	back.set_transform(object_transform);
+	object_transform.SetTranslation(object_translation2);
+	back2.set_transform(object_transform);
 }
 
 
@@ -730,8 +734,7 @@ void SceneApp::InitHealthSprite()
 		healths[i].set_position(gef::Vector4((40 * i) + 30, 30, -1));
 		healths[i].set_height(30);
 		healths[i].set_width(30);
-		healths[i].set_colour(0xFF0000FF);
-		healths[i].set_texture(tex);
+		healths[i].set_colour(0xFF00FF00);
 	}
 }
 

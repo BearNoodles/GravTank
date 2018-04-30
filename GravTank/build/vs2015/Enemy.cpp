@@ -97,7 +97,7 @@ void Enemy::Update(b2Vec2 gravity)
 		changeTimer = 0;
 		direction *= -1;
 		m_body->ApplyForceToCenter(b2Vec2(0, 500), true);
-		Shoot(b2Vec2(0, 150));
+		Shoot(b2Vec2(0, 200));
 	}
 	switch (enemyType)
 	{

@@ -5,7 +5,8 @@
 Player::Player(b2World* world, PrimitiveBuilder* builder, b2Vec2 startPos, gef::AudioManager* audioManager, int shootID, int moveID) :
 	m_world(world),
 	m_builder(builder),
-	bullet(NULL)
+	bullet(NULL),
+	explode(NULL)
 {
 	startPosition = startPos;
 	InitBody();
@@ -15,12 +16,14 @@ Player::Player(b2World* world, PrimitiveBuilder* builder, b2Vec2 startPos, gef::
 	voice_id_move = -1;
 	m_audioManager = audioManager;
 	CreateBullet();
+	CreateExplosion();
 	CreateTurret();
 	canShoot = true;
 	playerRight = false;
 	playerLeft = false;
 	maxHealth = 5;
 	health = maxHealth;
+	bulletForce = 200;
 }
 
 void Player::InitBody()
@@ -70,6 +73,11 @@ void Player::CreateBullet()
 	canShoot = true;
 }
 
+void Player::CreateExplosion()
+{
+	explode = new Explosion(m_body->GetPosition(), m_world, m_builder);
+}
+
 void Player::CreateTurret()
 {
 	turretRot = 0;
@@ -100,18 +108,37 @@ void Player::PositionTurret(float x, float y)
 
 
 
-void Player::Update(float x, float y, float frame_time)
+void Player::Update(float x, float y, b2Vec2 up)
 {
-	m_frameTime = frame_time;
 	UpdateFromSimulation(m_body);
 	bullet->Update();
 	if (!bullet->GetBody()->IsActive())
 	{
 		canShoot = true;
 	}
-	stickX = x;
-	stickY = y;
-	turretRot = b2Atan2(stickX, stickY);;
+
+	if (up.x == 1)
+	{
+		stickX = -y;
+		stickY = x; 
+	}
+	else if (up.y == -1)
+	{
+		stickX = -x;
+		stickY = -y;
+	}
+	else if (up.x == -1)
+	{
+		stickX = y;
+		stickY = -x;
+	}
+	else
+	{
+		stickX = x;
+		stickY = y;
+	}
+	//float rot = b2Atan2(up.x, up.y);
+	turretRot = b2Atan2(stickX, stickY);
 	PositionTurret(stickX, stickY);
 
 	
@@ -153,6 +180,7 @@ void Player::ResetPlayer(b2Vec2 startPos)
 	SetHealth(maxHealth);
 	SetPosition(startPos);
 	bullet->GetBody()->SetActive(false);
+	explode->GetBody()->SetActive(false);
 }
 
 GameObject* Player::GetTurret()
@@ -170,6 +198,11 @@ gef::MeshInstance* Player::GetBulletMesh()
 	return bullet;
 }
 
+gef::MeshInstance* Player::GetExplosionMesh()
+{
+	return explode;
+}
+
 bool Player::GetCanShoot()
 {
 	return canShoot;
@@ -180,15 +213,25 @@ void Player::SetCanShoot(bool value)
 	canShoot = value;
 }
 
-void Player::Shoot(b2Vec2 force)
+void Player::Shoot(float shotScale)
 {
 	if (canShoot)
 	{
 		voice_id_shoot = m_audioManager->PlaySample(sfx_id_shoot);
 		b2Vec2 norms(stickX, stickY);
 		norms.Normalize();
-		bullet->Fire(force, m_body->GetPosition(), b2Vec2(norms.x * 1.5f, -norms.y * 1.5f));
+		bullet->Fire(b2Vec2(stickX * bulletForce * shotScale, -stickY * bulletForce * shotScale), m_body->GetPosition(), b2Vec2(norms.x * 1.5f, -norms.y * 1.5f));
 		canShoot = false;
+	}
+}
+
+void Player::Explosion()
+{
+	if (!canShoot)
+	{
+		bullet->Reset();
+		canShoot = true;
+		explode->Activate(bullet->GetBody()->GetPosition());
 	}
 }
 

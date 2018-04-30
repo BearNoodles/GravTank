@@ -89,11 +89,10 @@ private:
 	int levelHeight = 15;
 
 	//building variables
-	gef::Mesh* buildingMesh;
-	GameObject building;
-	b2Body* buildingBody;
-	GameObject building2;
-	b2Body* buildingBody2;
+	gef::Mesh* backMesh;
+	GameObject back;
+	gef::Mesh* backMesh2;
+	GameObject back2;
 
 	Camera camera;
 
@@ -106,11 +105,12 @@ private:
 
 	float fps_;
 
+	float shotForceScale;
+
 	gef::PNGLoader pngLoader;
 	
-	gef::ImageData img;
-	gef::Texture* tex;
-	gef::Material* mat;
+	gef::ImageData healthImage;
+	gef::Texture* healthTexture;
 
 	gef::ImageData playerImage;
 	gef::Texture* playerTexture;
