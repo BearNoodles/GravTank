@@ -8,7 +8,7 @@
 class Player : public GameObject
 {
 public:
-	Player(b2World* world_, PrimitiveBuilder* builder, b2Vec2 startPos, gef::AudioManager* audioManager, int shootID, int moveID);
+	Player(b2World* world_, PrimitiveBuilder* builder, b2Vec2 startPos, gef::AudioManager* audioManager, int shootID, int moveID, int explodeID);
 	~Player();
 
 	void Update(float x, float y, b2Vec2 up);
@@ -79,7 +79,9 @@ private:
 	gef::AudioManager* m_audioManager;
 	int sfx_id_shoot;
 	int sfx_id_move;
+	int sfx_id_explode;
 	int voice_id_shoot;
 	int voice_id_move;
+	int voice_id_explode;
 };
 

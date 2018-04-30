@@ -212,11 +212,18 @@ void GameManager::Reset()
 
 }
 
-void GameManager::Update(b2Vec2 gravity)
+void GameManager::ResetAll()
+{
+	Reset();
+	currentLevel = 1;
+	m_state = MENU;
+}
+
+void GameManager::Update(b2Vec2 gravity, b2Vec2 playerPos, float fpsScale)
 {
 	for (int i = 0; i < enemyCount; i++)
 	{
-		enemies[i]->Update(gravity);
+		enemies[i]->Update(gravity, playerPos, fpsScale);
 	}
 }
 

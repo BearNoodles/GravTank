@@ -43,8 +43,7 @@ public:
 	void UpdateMenu();
 	void Render();
 private:
-	void InitGround();
-	void InitBuildings();
+	void InitBackground();
 	void InitFont();
 	void InitHealthSprite();
 	void CleanUpFont();
@@ -52,6 +51,9 @@ private:
 	void SetupLights();
 	void ProcessControllerInput();
 	void ProcessKeyboardInput();
+
+	void ResetLevel(bool nextLevel);
+	void PlayerDeath();
 
 	GameObject* toDel;
     
@@ -64,7 +66,6 @@ private:
 	void RightPressed();
 	void LeftPressed();
 	void StopPlayer();
-	void StartPressed();
 
 	PrimitiveBuilder* primitive_builder_;
 
@@ -74,7 +75,10 @@ private:
 	// player variables
 	Player* player;
 	float playerSpeed;
-	gef::Sprite healths[10];
+	gef::Sprite healths[6];
+
+	bool L2Held;
+
 	float rightStickX;
 	float rightStickY;
 
@@ -105,7 +109,7 @@ private:
 
 	float fps_;
 
-	float shotForceScale;
+	float fpsScale;
 
 	gef::PNGLoader pngLoader;
 	
@@ -137,8 +141,6 @@ private:
 	gef::Material* blackMaterial;
 	gef::Sprite blackSprite;
 
-	void DrawBack();
-
 	gef::ImageData menuImage;
 	gef::Texture* menuTexture;
 	gef::Material* menuMaterial;
@@ -158,9 +160,9 @@ private:
 
 	gef::AudioManager* audio_manager_;
 
-	int sfx_id_;
-	int sfx_id_2;
-	int sfx_id_3;
+	int sfx_id_shoot;
+	int sfx_id_move;
+	int sfx_id_explode;
 };
 
 #endif // _SCENE_APP_H

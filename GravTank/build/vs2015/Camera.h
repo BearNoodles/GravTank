@@ -27,6 +27,8 @@ public:
 	bool CameraTargetReached();
 	void ChangeCameraTarget(int dir);
 	int GetCameraTarget();
+
+	void ResetCamera();
 	
 
 private:

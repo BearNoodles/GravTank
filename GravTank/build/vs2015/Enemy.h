@@ -11,7 +11,7 @@ class Enemy : public GameObject
 public:
 	Enemy(int type, b2World* world_, PrimitiveBuilder* builder, b2Vec2 startPosition, gef::AudioManager* audioManager, int shootID, int moveID);
 	~Enemy();
-	void Update(b2Vec2 gravity);
+	void Update(b2Vec2 gravity, b2Vec2 aim, float fpsScale);
 	void Shoot(b2Vec2 force);
 	bool GetCanShoot();
 	gef::MeshInstance* GetBulletMesh();
@@ -25,8 +25,10 @@ private:
 	Bullet* bullet;
 	bool canShoot;
 
+	float shotForce;
+
 	float bulletForce;
-	int changeTimer;
+	float changeTimer;
 	int changeAt;
 	int direction;
 	float speed;

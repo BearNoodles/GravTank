@@ -18,6 +18,7 @@ Enemy::Enemy(int type, b2World* world, PrimitiveBuilder* builder, b2Vec2 start, 
 	sfx_id_move = moveID;
 	voice_id_shoot = -1;
 	voice_id_move = -1;
+	shotForce = 200;
 }
 
 void Enemy::Init()
@@ -82,22 +83,26 @@ void Enemy::CreateBullet()
 	canShoot = true;
 }
 
-void Enemy::Update(b2Vec2 gravity)
+void Enemy::Update(b2Vec2 gravity, b2Vec2 playerPos, float fpsScale)
 {
+	gravity *= fpsScale;
 	if (!m_body->IsActive())
 	{
 		if (!isDead)
 			isDead = true;
 		return;
 	}
-	//do with fps
-	changeTimer++;
+
+	b2Vec2 aim = playerPos - m_body->GetWorldCenter();
+	aim.Normalize();
+	b2Vec2 force(aim.x * shotForce * fpsScale, aim.y * shotForce * fpsScale);
+	changeTimer += fpsScale;
 	if (changeTimer >= changeAt)
 	{
 		changeTimer = 0;
 		direction *= -1;
 		m_body->ApplyForceToCenter(b2Vec2(0, 500), true);
-		Shoot(b2Vec2(0, 200));
+		Shoot(force);
 	}
 	switch (enemyType)
 	{
@@ -106,7 +111,7 @@ void Enemy::Update(b2Vec2 gravity)
 				m_body->ApplyForceToCenter(b2Vec2(0, -2 * gravity.y * m_body->GetMass()), true);
 			else if (gravity.y == 0)
 				m_body->ApplyForceToCenter(b2Vec2(-gravity.x, -b2Abs(gravity.x) * m_body->GetMass()), true);
-			m_body->SetLinearVelocity(b2Vec2(direction * speed, m_body->GetLinearVelocity().y));
+			m_body->SetLinearVelocity(b2Vec2(direction * speed * fpsScale, m_body->GetLinearVelocity().y));
 			break;
 
 		case 4:
@@ -114,7 +119,7 @@ void Enemy::Update(b2Vec2 gravity)
 				m_body->ApplyForceToCenter(b2Vec2(-2 * gravity.x * m_body->GetMass(), 0), true);
 			else if (gravity.x == 0)
 				m_body->ApplyForceToCenter(b2Vec2(-b2Abs(gravity.y) * m_body->GetMass(), -gravity.y), true);
-			m_body->SetLinearVelocity(b2Vec2(m_body->GetLinearVelocity().x, direction * speed));
+			m_body->SetLinearVelocity(b2Vec2(m_body->GetLinearVelocity().x, direction * speed * fpsScale));
 			break;
 			
 		case 5:
@@ -122,7 +127,7 @@ void Enemy::Update(b2Vec2 gravity)
 				m_body->ApplyForceToCenter(b2Vec2(0, -2 * gravity.y * m_body->GetMass()), true);
 			else if (gravity.y == 0)
 				m_body->ApplyForceToCenter(b2Vec2(-gravity.x, b2Abs(gravity.x) * m_body->GetMass()), true);
-			m_body->SetLinearVelocity(b2Vec2(direction * speed, m_body->GetLinearVelocity().y)); 
+			m_body->SetLinearVelocity(b2Vec2(direction * speed * fpsScale, m_body->GetLinearVelocity().y));
 			break;
 
 		case 6:
@@ -130,7 +135,7 @@ void Enemy::Update(b2Vec2 gravity)
 				m_body->ApplyForceToCenter(b2Vec2(-2 * gravity.x * m_body->GetMass(), 0), true);
 			else if (gravity.x == 0)
 				m_body->ApplyForceToCenter(b2Vec2(b2Abs(gravity.y) * m_body->GetMass(), -gravity.y), true);
-			m_body->SetLinearVelocity(b2Vec2(m_body->GetLinearVelocity().x, direction * speed)); 
+			m_body->SetLinearVelocity(b2Vec2(m_body->GetLinearVelocity().x, direction * speed * fpsScale));
 			break;
 
 		default:
@@ -138,7 +143,7 @@ void Enemy::Update(b2Vec2 gravity)
 				m_body->ApplyForceToCenter(b2Vec2(0, -2 * gravity.y * m_body->GetMass()), true);
 			else if (gravity.y == 0)
 				m_body->ApplyForceToCenter(b2Vec2(-gravity.x, -b2Abs(gravity.x) * m_body->GetMass()), true);
-			m_body->SetLinearVelocity(b2Vec2(direction * speed, m_body->GetLinearVelocity().y));
+			m_body->SetLinearVelocity(b2Vec2(direction * speed * fpsScale, m_body->GetLinearVelocity().y));
 			break;
 			
 	}
@@ -165,11 +170,13 @@ bool Enemy::GetCanShoot()
 
 void Enemy::Shoot(b2Vec2 force)
 {
+	b2Vec2 aim = force;
+	aim.Normalize();
 	if (canShoot)
 	{
 		voice_id_shoot = m_audioManager->PlaySample(sfx_id_shoot);
 		canShoot = false;
-		bullet->Fire(force, m_body->GetPosition(), b2Vec2(0, 1.5f));
+		bullet->Fire(force, m_body->GetPosition(), b2Vec2(aim.x * 1.5f, aim.y * 1.5f));
 	}
 }
 
@@ -181,6 +188,7 @@ b2Vec2 Enemy::GetPosition()
 
 Enemy::~Enemy()
 {
+	canShoot = true;
 	if (voice_id_shoot != -1)
 		m_audioManager->StopPlayingSampleVoice(voice_id_shoot);
 	if (voice_id_move != -1)
@@ -190,4 +198,5 @@ Enemy::~Enemy()
 	delete mesh_;
 	mesh_ = NULL;
 	m_audioManager = NULL;
+	bullet = NULL;
 }

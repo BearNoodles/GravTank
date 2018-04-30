@@ -2,7 +2,7 @@
 
 
 
-Player::Player(b2World* world, PrimitiveBuilder* builder, b2Vec2 startPos, gef::AudioManager* audioManager, int shootID, int moveID) :
+Player::Player(b2World* world, PrimitiveBuilder* builder, b2Vec2 startPos, gef::AudioManager* audioManager, int shootID, int moveID, int explodeID) :
 	m_world(world),
 	m_builder(builder),
 	bullet(NULL),
@@ -12,8 +12,10 @@ Player::Player(b2World* world, PrimitiveBuilder* builder, b2Vec2 startPos, gef::
 	InitBody();
 	sfx_id_shoot = shootID;
 	sfx_id_move = moveID;
+	sfx_id_explode = explodeID;
 	voice_id_shoot = -1;
 	voice_id_move = -1;
+	voice_id_explode = -1;
 	m_audioManager = audioManager;
 	CreateBullet();
 	CreateExplosion();
@@ -21,7 +23,7 @@ Player::Player(b2World* world, PrimitiveBuilder* builder, b2Vec2 startPos, gef::
 	canShoot = true;
 	playerRight = false;
 	playerLeft = false;
-	maxHealth = 5;
+	maxHealth = 6;
 	health = maxHealth;
 	bulletForce = 200;
 }
@@ -236,6 +238,7 @@ void Player::ExplodeBullet()
 {
 	if (!canShoot)
 	{
+		voice_id_explode = m_audioManager->PlaySample(sfx_id_explode);
 		explode->Activate(bullet->GetBody()->GetPosition());
 		bullet->Reset();
 		canShoot = true;
@@ -251,6 +254,12 @@ b2Vec2 Player::GetPosition()
 void Player::SetPosition(b2Vec2 pos)
 {
 	m_body->SetTransform(pos, m_body->GetAngle());
+	if (voice_id_shoot != -1)
+		m_audioManager->StopPlayingSampleVoice(voice_id_shoot);
+	if (voice_id_move != -1)
+		m_audioManager->StopPlayingSampleVoice(voice_id_move);
+	if (voice_id_explode != -1)
+		m_audioManager->StopPlayingSampleVoice(voice_id_explode);
 }
 
 b2Vec2 Player::GetVelocity()

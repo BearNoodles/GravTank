@@ -111,6 +111,15 @@ void Camera::SetCameraTarget(int dir)
 
 }
 
+void Camera::ResetCamera()
+{
+	cameraUp.set_value(0.0f, 1.0f, 0.0f);
+	cameraRight.Set(1.0f, 0.0f);
+	cameraTarget.set_value(8.0f, 8.0f, 0.0f);
+
+	currentTarget = 0;
+}
+
 int Camera::GetCameraTarget()
 {
 	return currentTarget;

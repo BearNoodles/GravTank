@@ -26,6 +26,7 @@ public:
 
 	void LoadLevel();
 	void Reset();
+	void ResetAll();
 	void RenderLevel();
 	GameObject* GetBlock(int i, int j);
 	b2Vec2 GetStartPosition();
@@ -39,7 +40,7 @@ public:
 	void ReduceEnemyCount();
 	gef::MeshInstance* GetEnemyMesh(int i);
 
-	void Update(b2Vec2 gravity);
+	void Update(b2Vec2 gravity, b2Vec2 playerPos, float fpsScale);
 	void ChangeDifficulty();
 	int GetDifficulty();
 
@@ -59,6 +60,7 @@ private:
 	int enemyCount;
 	int enemiesAlive;
 	Enemy* enemies[15];
+
 
 	gef::AudioManager* m_audioManager;
 	int sfx_id_shoot;

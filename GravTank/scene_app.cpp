@@ -19,8 +19,9 @@ SceneApp::SceneApp(gef::Platform& platform) :
 	world_(NULL),
 	toDel(NULL),
 	audio_manager_(NULL),
-	sfx_id_(-1),
-	sfx_id_2(-1)
+	sfx_id_shoot(-1),
+	sfx_id_move(-1),
+	sfx_id_explode(-1)
 {
 }
 
@@ -36,6 +37,32 @@ void SceneApp::Init()
 
 	// initialise primitive builder to make create some 3D geometry easier
 	primitive_builder_ = new PrimitiveBuilder(platform_);
+
+	L2Held = false;
+
+	rightStickX = 0;
+	rightStickY = -1;
+
+	screenHeight = 544;
+	screenWidth = 960;
+
+	if (audio_manager_)
+	{
+		sfx_id_shoot = audio_manager_->LoadSample("pew.wav", platform_);
+		sfx_id_move = audio_manager_->LoadSample("print.wav", platform_);
+		sfx_id_explode = audio_manager_->LoadSample("explode.wav", platform_);
+		audio_manager_->LoadMusic("music.wav", platform_);
+	}
+
+	// initialise the physics world
+	gravityAmount = 9.81f;
+	b2Vec2 gravity(0.0f, -gravityAmount);
+	world_ = new b2World(gravity);
+	gameManager = new GameManager(world_, primitive_builder_, audio_manager_, sfx_id_shoot, sfx_id_move);
+	gameManager->LoadLevel();
+	player = new Player(world_, primitive_builder_, gameManager->GetStartPosition(), audio_manager_, sfx_id_shoot, sfx_id_move, sfx_id_explode);
+	playerSpeed = 6;
+	InitBackground();
 
 	pngLoader.Load("face.png", platform_, playerImage);
 	playerTexture = gef::Texture::Create(platform_, playerImage);
@@ -62,30 +89,6 @@ void SceneApp::Init()
 	//tileMaterial.set_colour(0xff0000ff);
 	tileMaterial->set_texture(tileTexture);
 
-	rightStickX = 0;
-	rightStickY = -1;
-
-	screenHeight = 544;
-	screenWidth = 960;
-
-	if (audio_manager_)
-	{
-		sfx_id_ = audio_manager_->LoadSample("pew.wav", platform_);
-		sfx_id_2 = audio_manager_->LoadSample("print.wav", platform_);
-		audio_manager_->LoadMusic("music.wav", platform_);
-	}
-
-	// initialise the physics world
-	gravityAmount = 9.81f;
-	b2Vec2 gravity(0.0f, -gravityAmount);
-	world_ = new b2World(gravity);
-	gameManager = new GameManager(world_, primitive_builder_, audio_manager_, sfx_id_, sfx_id_2);
-	gameManager->LoadLevel();
-	player = new Player(world_, primitive_builder_, gameManager->GetStartPosition(), audio_manager_, sfx_id_, sfx_id_2);
-	playerSpeed = 6;
-	InitGround();
-	InitBuildings();
-
 	pngLoader.Load("background.png", platform_, backImage);
 	backTexture = gef::Texture::Create(platform_, backImage);
 	backMaterial = new gef::Material();
@@ -97,10 +100,6 @@ void SceneApp::Init()
 	blackMaterial = new gef::Material();
 	//mat.set_colour(0xff0000ff);
 	blackMaterial->set_texture(blackTexture);
-	//blackSprite.set_texture(blackTexture);
-	//blackSprite.set_height(544);
-	//blackSprite.set_width(960);
-	//blackSprite.set_position(gef::Vector4(480, 272, 0));
 	
 
 	pngLoader.Load("menuBack.png", platform_, menuImage);
@@ -161,10 +160,12 @@ void SceneApp::CleanUp()
 	// free up audio assets
 	if (audio_manager_)
 	{
-		if (sfx_id_ != -1)
-			audio_manager_->UnloadSample(sfx_id_);
-		if (sfx_id_2 != -1)
-			audio_manager_->UnloadSample(sfx_id_2);
+		if (sfx_id_shoot != -1)
+			audio_manager_->UnloadSample(sfx_id_shoot);
+		if (sfx_id_move != -1)
+			audio_manager_->UnloadSample(sfx_id_move);
+		if (sfx_id_explode != -1)
+			audio_manager_->UnloadSample(sfx_id_explode);
 		audio_manager_->UnloadMusic();
 	}
 
@@ -181,7 +182,7 @@ bool SceneApp::Update(float frame_time)
 
 	gravityAmount = 9.81f * 60.0f / fps_;
 
-	shotForceScale = 60.0f / fps_;
+	fpsScale = 60.0f / fps_;
 
 	if (input_manager_)
 	{
@@ -247,6 +248,7 @@ void SceneApp::UpdatePlaying(float frame_time)
 			b2Body* playerBody = NULL;
 			b2Body* enemyBody = NULL;
 			b2Body* bulletBody = NULL;
+			b2Body* bulletBody2 = NULL;
 			b2Body* tileBody = NULL;
 
 
@@ -259,6 +261,7 @@ void SceneApp::UpdatePlaying(float frame_time)
 			GameObject* playerTemp = NULL;
 			GameObject* enemyTemp = NULL;
 			GameObject* bulletTemp = NULL;
+			GameObject* bulletTemp2 = NULL;
 			GameObject* tileTemp = NULL;
 
 
@@ -292,8 +295,16 @@ void SceneApp::UpdatePlaying(float frame_time)
 			}
 			else if (gameObjectB != NULL && gameObjectB->GetType() == BULLET)
 			{
-				bulletTemp = gameObjectB;
-				bulletBody = bodyB;
+				if (gameObjectA->GetType() == BULLET)
+				{
+					bulletTemp2 = gameObjectB;
+					bulletBody2 = bodyB;
+				}
+				else
+				{
+					bulletTemp = gameObjectB;
+					bulletBody = bodyB;
+				}
 			}
 			else if (gameObjectB != NULL && gameObjectB->GetType() == ENEMY)
 			{
@@ -315,9 +326,7 @@ void SceneApp::UpdatePlaying(float frame_time)
 
 					if (player->GetHealth() <= 0)
 					{
-						gameManager->Reset();
-						gameManager->LoadLevel();
-						player->ResetPlayer(gameManager->GetStartPosition());
+						PlayerDeath();
 					}
 				}
 				else
@@ -332,14 +341,12 @@ void SceneApp::UpdatePlaying(float frame_time)
 				{
 					gameManager->ReduceEnemyCount();
 					enemyBody->SetActive(false);
-					bulletBody->SetActive(false);
+					if (bulletTemp->GetBulletType() == PLAYERBULLET)
+						bulletBody->SetActive(false);
 
 					if (gameManager->GetEnemiesAlive() <= 0)
 					{
-						gameManager->Reset();
-						gameManager->NextLevel();
-						gameManager->LoadLevel();
-						player->ResetPlayer(gameManager->GetStartPosition());
+						ResetLevel(true);
 					}
 					break;
 				}
@@ -352,8 +359,21 @@ void SceneApp::UpdatePlaying(float frame_time)
 			else if (bulletTemp && tileTemp)
 			{
 				if (bulletTemp->GetBulletType() != EXPLOSION)
+				{
 					bulletBody->SetActive(false);
-				break;
+					break;
+				}
+			}
+			else if (bulletTemp && bulletTemp2)
+			{
+				if (bulletTemp->GetBulletType() == EXPLOSION && bulletTemp2->GetBulletType() != EXPLOSION)
+				{
+					bulletBody2->SetActive(false);
+				}
+				else if (bulletTemp2->GetBulletType() == EXPLOSION && bulletTemp->GetBulletType() != EXPLOSION)
+				{
+					bulletBody->SetActive(false);
+				}
 			}
 
 		}
@@ -362,7 +382,7 @@ void SceneApp::UpdatePlaying(float frame_time)
 		contact = contact->GetNext();
 	}
 
-	gameManager->Update(world_->GetGravity());
+	gameManager->Update(world_->GetGravity(), player->GetPosition(), fpsScale);
 }
 
 void SceneApp::ProcessControllerInput()
@@ -377,10 +397,7 @@ void SceneApp::ProcessControllerInput()
 			{
 				if (controller->buttons_pressed() & gef_SONY_CTRL_START)
 				{
-					gameManager->SetState(PLAYING);
-					gameManager->Reset();
-					gameManager->LoadLevel();
-					player->ResetPlayer(gameManager->GetStartPosition());
+					ResetLevel(false);
 				}
 
 				if (controller->buttons_pressed() & gef_SONY_CTRL_TRIANGLE)
@@ -389,70 +406,93 @@ void SceneApp::ProcessControllerInput()
 				}
 			}
 
-			// check for button presses and print out some debug text
-			if (controller->buttons_pressed() & gef_SONY_CTRL_CROSS)
-				gef::DebugOut("CROSS pressed\n");
-			if (controller->buttons_pressed() & gef_SONY_CTRL_SQUARE)
-				gef::DebugOut("SQUARE pressed\n");
-			if (controller->buttons_pressed() & gef_SONY_CTRL_TRIANGLE)
-			{
-				gef::DebugOut("TRIANGLE pressed\n");
-				gameManager->Reset();
-				gameManager->NextLevel();
-				gameManager->LoadLevel();
-				player->ResetPlayer(gameManager->GetStartPosition());
-			}
-			if (controller->buttons_pressed() & gef_SONY_CTRL_CIRCLE)
-				gef::DebugOut("CIRCLE pressed\n");
-			if (controller->buttons_pressed() & gef_SONY_CTRL_R2)
-			{
-				player->Shoot(shotForceScale);
-			}
-			if (controller->buttons_pressed() & gef_SONY_CTRL_L2)
-			{
-				player->ExplodeBullet();
-			}
-			if (controller->left_stick_x_axis() >= 0.3f)
-			{
-				RightPressed();
-				player->SetMoveSound(true);
-			}
-
-			else if (controller->left_stick_x_axis() <= -0.3f)
-			{
-				LeftPressed();
-				player->SetMoveSound(true);
-			}
-
 			else
 			{
-				if (camera.GetCameraTarget() == 0 || camera.GetCameraTarget() == 2)
+
+				// check for button presses and print out some debug text
+				if (controller->buttons_pressed() & gef_SONY_CTRL_CROSS)
+					gef::DebugOut("CROSS pressed\n");
+				if (controller->buttons_pressed() & gef_SONY_CTRL_SQUARE)
+					gef::DebugOut("SQUARE pressed\n");
+				if (controller->buttons_pressed() & gef_SONY_CTRL_TRIANGLE)
 				{
-					player->SetVelocity(b2Vec2(0.0f, player->GetVelocity().y));
+					ResetLevel(true);
+				}
+				if (controller->buttons_pressed() & gef_SONY_CTRL_CIRCLE)
+					gef::DebugOut("CIRCLE pressed\n");
+				if (controller->buttons_pressed() & gef_SONY_CTRL_R2)
+				{
+					if (player->GetCanShoot())
+					{
+						player->Shoot(fpsScale);
+					}
+					else
+					{
+						player->ExplodeBullet();
+					}
+				}
+				if (controller->buttons_pressed() & gef_SONY_CTRL_L2)
+				{
+					if (camera.GetCameraTarget() == 0 || camera.GetCameraTarget() == 2)
+					{
+						player->SetVelocity(b2Vec2(0.0f, player->GetVelocity().y));
+					}
+					else
+					{
+						player->SetVelocity(b2Vec2(player->GetVelocity().x, 0.0f));
+					}
+					player->SetMoveSound(false);
+
+					if (!camera.GetRotating())
+					{
+						player->SetPlayerRight(false);
+						player->SetPlayerLeft(false);
+					}
 				}
 				else
 				{
-					player->SetVelocity(b2Vec2(player->GetVelocity().x, 0.0f));
-				}
-				player->SetMoveSound(false);
 
-				if (!camera.GetRotating())
+				}
+				if (controller->left_stick_x_axis() >= 0.3f)
 				{
-					player->SetPlayerRight(false);
-					player->SetPlayerLeft(false);
+					RightPressed();
 				}
-			}
+
+				else if (controller->left_stick_x_axis() <= -0.3f)
+				{
+					LeftPressed();
+				}
+
+				else
+				{
+					if (camera.GetCameraTarget() == 0 || camera.GetCameraTarget() == 2)
+					{
+						player->SetVelocity(b2Vec2(0.0f, player->GetVelocity().y));
+					}
+					else
+					{
+						player->SetVelocity(b2Vec2(player->GetVelocity().x, 0.0f));
+					}
+					player->SetMoveSound(false);
+
+					if (!camera.GetRotating())
+					{
+						player->SetPlayerRight(false);
+						player->SetPlayerLeft(false);
+					}
+				}
 
 
-			// print out some debug text when left stick is moved
-			if (controller->right_stick_x_axis() != 0.0f)
-				gef::DebugOut("right_stick_x_axis: %f\n", controller->right_stick_x_axis());
-			if (controller->right_stick_y_axis() != 0.0f)
-				gef::DebugOut("right_stick_y_axis: %f\n", controller->right_stick_y_axis());
-			if (controller->right_stick_x_axis() != 0 || controller->right_stick_y_axis() != 0)
-			{
-				rightStickX = controller->right_stick_x_axis();
-				rightStickY = controller->right_stick_y_axis();
+				// print out some debug text when left stick is moved
+				if (controller->right_stick_x_axis() != 0.0f)
+					gef::DebugOut("right_stick_x_axis: %f\n", controller->right_stick_x_axis());
+				if (controller->right_stick_y_axis() != 0.0f)
+					gef::DebugOut("right_stick_y_axis: %f\n", controller->right_stick_y_axis());
+				if (controller->right_stick_x_axis() != 0 || controller->right_stick_y_axis() != 0)
+				{
+					rightStickX = controller->right_stick_x_axis();
+					rightStickY = controller->right_stick_y_axis();
+				}
 			}
 		}
 	}
@@ -467,10 +507,7 @@ void SceneApp::ProcessKeyboardInput()
 		{
 			if (keyboard->IsKeyDown(gef::Keyboard::KC_RETURN))
 			{
-				gameManager->SetState(PLAYING);
-				gameManager->Reset();
-				gameManager->LoadLevel();
-				player->ResetPlayer(gameManager->GetStartPosition());
+				ResetLevel(false);
 			}
 			
 			if (keyboard->IsKeyDown(gef::Keyboard::KC_C))
@@ -496,27 +533,20 @@ void SceneApp::ProcessKeyboardInput()
 
 			if (keyboard->IsKeyDown(gef::Keyboard::KC_SPACE))
 			{
-				player->Shoot(shotForceScale);
+				player->Shoot(fpsScale);
 			}
 			if (keyboard->IsKeyDown(gef::Keyboard::KC_P))
 			{
 				if (gameManager->GetState() == PLAYING)
 				{
-					//gameManager->SetState(LOADING);
-					gameManager->Reset();
-					gameManager->NextLevel();
-					gameManager->LoadLevel();
-					player->ResetPlayer(gameManager->GetStartPosition());
+					ResetLevel(true);
 				}
 			}
 			if (keyboard->IsKeyDown(gef::Keyboard::KC_R))
 			{
 				if (gameManager->GetState() == PLAYING)
 				{
-					//gameManager->SetState(LOADING);
-					gameManager->Reset();
-					gameManager->LoadLevel();
-					player->SetPosition(gameManager->GetStartPosition());
+					ResetLevel(false);
 				}
 			}
 		}
@@ -604,13 +634,13 @@ void SceneApp::Render()
 		renderer_3d_->set_override_material(&primitive_builder_->red_material());
 		for (int i = 0; i < gameManager->GetEnemyCount(); i++)
 		{
-			if (!gameManager->GetEnemy(i)->GetCanShoot())
+			if (!gameManager->GetEnemy(i)->GetCanShoot() && !gameManager->GetEnemy(i)->GetDead())
 			{
 				renderer_3d_->DrawMesh(*gameManager->GetEnemy(i)->GetBulletMesh());
 			}
 		}
 		renderer_3d_->set_override_material(NULL);
-
+		
 		renderer_3d_->set_override_material(&primitive_builder_->green_material());
 		if (!player->GetCanShoot())
 		{
@@ -628,7 +658,6 @@ void SceneApp::Render()
 
 		// start drawing sprites, but don't clear the frame buffer
 		sprite_renderer_->Begin(false);
-		DrawBack();
 		DrawHUD();
 		sprite_renderer_->End();
 	}
@@ -645,6 +674,12 @@ void SceneApp::DrawHUD()
 	{
 		sprite_renderer_->DrawSprite(healths[i]);
 	}
+	font_->RenderText(sprite_renderer_, gef::Vector4(healths[0].position().x() - 10.0f, healths[0].position().y() - 15.0f, -1.0f), 1.0f, 0xff000000, gef::TJ_LEFT, "H");
+	font_->RenderText(sprite_renderer_, gef::Vector4(healths[1].position().x() - 10.0f, healths[1].position().y() - 15.0f, -1.0f), 1.0f, 0xff000000, gef::TJ_LEFT, "E");
+	font_->RenderText(sprite_renderer_, gef::Vector4(healths[2].position().x() - 10.0f, healths[2].position().y() - 15.0f, -1.0f), 1.0f, 0xff000000, gef::TJ_LEFT, "A");
+	font_->RenderText(sprite_renderer_, gef::Vector4(healths[3].position().x() - 10.0f, healths[3].position().y() - 15.0f, -1.0f), 1.0f, 0xff000000, gef::TJ_LEFT, "L");
+	font_->RenderText(sprite_renderer_, gef::Vector4(healths[4].position().x() - 10.0f, healths[4].position().y() - 15.0f, -1.0f), 1.0f, 0xff000000, gef::TJ_LEFT, "T");
+	font_->RenderText(sprite_renderer_, gef::Vector4(healths[5].position().x() - 10.0f, healths[5].position().y() - 15.0f, -1.0f), 1.0f, 0xff000000, gef::TJ_LEFT, "H");
 }
 
 void SceneApp::DrawMenu()
@@ -669,45 +704,7 @@ void SceneApp::DrawMenu()
 	}
 }
 
-void SceneApp::DrawBack()
-{
-	//sprite_renderer_->DrawSprite(blackSprite);
-}
-
-
-
-void SceneApp::InitGround()
-{
-	// ground dimensions
-	gef::Vector4 ground_half_dimensions(50.0f, 0.5f, 0.5f);
-
-	// setup the mesh for the ground
-	ground_mesh_ = primitive_builder_->CreateBoxMesh(ground_half_dimensions);
-	ground_.set_mesh(ground_mesh_);
-
-	// create a physics body
-	b2BodyDef body_def;
-	body_def.type = b2_staticBody;
-	body_def.position = b2Vec2(0.0f, 0.0f);
-
-	ground_body_ = world_->CreateBody(&body_def);
-
-	// create the shape
-	b2PolygonShape shape;
-	shape.SetAsBox(ground_half_dimensions.x(), ground_half_dimensions.y());
-
-	// create the fixture
-	b2FixtureDef fixture_def;
-	fixture_def.shape = &shape;
-
-	// create the fixture on the rigid body
-	ground_body_->CreateFixture(&fixture_def);
-
-	// update visuals from simulation data
-	ground_.UpdateFromSimulation(ground_body_);
-}
-
-void SceneApp::InitBuildings()
+void SceneApp::InitBackground()
 {
 	// building dimensions
 	gef::Vector4 back_half_dimensions(30.0f, 30.0f, 0.1f);
@@ -746,11 +743,12 @@ void SceneApp::InitHealthSprite()
 {
 	for (int i = 0; i < player->GetMaxHealth(); i++)
 	{
-		healths[i].set_position(gef::Vector4((40 * i) + 30, 30, -1));
+		healths[i].set_position(gef::Vector4((40 * i) + 30, 30, -0.5f));
 		healths[i].set_height(30);
 		healths[i].set_width(30);
 		healths[i].set_colour(0xFF00FF00);
 	}
+	
 }
 
 void SceneApp::CleanUpFont()
@@ -810,14 +808,18 @@ void SceneApp::RightPressed()
 	{
 		if (camera.GetCameraTarget() == 0 || camera.GetCameraTarget() == 2)
 		{
-			player->SetVelocity(b2Vec2(playerSpeed * camera.GetCameraRight().x, player->GetVelocity().y));
+			//if (!L2Held)
+				player->SetVelocity(b2Vec2(playerSpeed * camera.GetCameraRight().x, player->GetVelocity().y));
 		}
 		else
 		{
-			player->SetVelocity(b2Vec2(player->GetVelocity().x, playerSpeed * camera.GetCameraRight().y));
+			//if (!L2Held)
+				player->SetVelocity(b2Vec2(player->GetVelocity().x, playerSpeed * camera.GetCameraRight().y));
 		}
 
 		player->SetPlayerRight(true);
+
+		player->SetMoveSound(true);
 	}
 
 	player->SetPlayerLeft(false);
@@ -857,13 +859,17 @@ void SceneApp::LeftPressed()
 	{
 		if (camera.GetCameraTarget() == 0 || camera.GetCameraTarget() == 2)
 		{
-			player->SetVelocity(b2Vec2(-playerSpeed * camera.GetCameraRight().x, player->GetVelocity().y));
+			//if (!L2Held)
+				player->SetVelocity(b2Vec2(-playerSpeed * camera.GetCameraRight().x, player->GetVelocity().y));
 		}
 		else
 		{
-			player->SetVelocity(b2Vec2(player->GetVelocity().x, -playerSpeed * camera.GetCameraRight().y));
+			//if (!L2Held)
+				player->SetVelocity(b2Vec2(player->GetVelocity().x, -playerSpeed * camera.GetCameraRight().y));
 		}
 		player->SetPlayerLeft(true);
+
+		player->SetMoveSound(true);
 	}
 
 	player->SetPlayerRight(false);
@@ -887,5 +893,24 @@ void SceneApp::StopPlayer()
 		player->SetPlayerLeft(false);
 	}
 	
+}
+
+void SceneApp::ResetLevel(bool nextLevel)
+{
+	gameManager->SetState(PLAYING);
+	gameManager->Reset();
+	if (nextLevel)
+		gameManager->NextLevel();
+	gameManager->LoadLevel();
+	camera.ResetCamera();
+	world_->SetGravity(b2Vec2(0, -gravityAmount));
+	player->ResetPlayer(gameManager->GetStartPosition());
+}
+
+void SceneApp::PlayerDeath()
+{
+	player->SetHealth(player->GetMaxHealth());
+	ResetLevel(false);
+	gameManager->ResetAll();
 }
 
