@@ -7,10 +7,16 @@ GameManager::GameManager(b2World* world, PrimitiveBuilder* builder, gef::AudioMa
 	m_world(world),
 	m_builder(builder)
 {
+	//start in menu state
 	m_state = MENU;
+	//level 1 first
 	currentLevel = 1;
+
 	enemyCount = 0;
+
+	//difficulty out of 3, higher difficulty means more enemies
 	m_difficulty = 1;
+
 	m_audioManager = audioManager;
 	sfx_id_shoot = shootID;
 	sfx_id_move = moveID;
@@ -20,6 +26,7 @@ GameManager::GameManager(b2World* world, PrimitiveBuilder* builder, gef::AudioMa
 
 void GameManager::NextLevel()
 {
+	//keep difficulty between 1 and 3
 	currentLevel++;
 	if (currentLevel > 3)
 	{
@@ -27,10 +34,17 @@ void GameManager::NextLevel()
 	}
 }
 
+int GameManager::GetLevelNo()
+{
+	return currentLevel;
+}
+
 void GameManager::LoadLevel()
 {
+	//temp array to hold current level values
 	int level[15][15];
 
+	//set up temp array with the current level
 	for (int i = 0; i < width; i++)
 	{
 		for (int j = 0; j < height; j++)
@@ -50,6 +64,7 @@ void GameManager::LoadLevel()
 		}
 	}
 
+	//dimensions of a block
 	gef::Vector4 building_half_dimensions(2.0f, 2.0f, 0.5f);
 
 	b2FixtureDef fixture_def;
@@ -64,17 +79,19 @@ void GameManager::LoadLevel()
 		{
 			switch (level[i][j])
 			{
+				//0 gives an empty space in the level
 				case 0:
 					SetBlockNull(i, j);
 					break;
 
+				// 1 loads a level block in that position, with a body so objects can make contact with it
 				case 1:
-					// setup the mesh for the buildings
+					// setup the mesh for the block
 					levelBlocks[i][j].blockObject = new GameObject();
 					levelBlocks[i][j].blockMesh = m_builder->CreateBoxMesh(building_half_dimensions);
 					levelBlocks[i][j].blockObject->set_mesh(levelBlocks[i][j].blockMesh);
 
-					// create physics bodies
+					// create physics body
 					body_def.type = b2_staticBody;
 					body_def.position = b2Vec2(4 * j, 4 * -i);
 
@@ -82,52 +99,58 @@ void GameManager::LoadLevel()
 					levelBlocks[i][j].blockBody->SetUserData(levelBlocks[i][j].blockObject);
 
 					// create the shape
-					shape;
 					shape.SetAsBox(building_half_dimensions.x(), building_half_dimensions.y());
 
 					// create the fixture
-					fixture_def;
 					fixture_def.shape = &shape;
 
-					// create the fixtures on the rigid bodies
+					// create the fixture on the rigid body
 					levelBlocks[i][j].blockBody->CreateFixture(&fixture_def);
 
 					// update visuals from simulation data
 					levelBlocks[i][j].blockObject->UpdateFromSimulation(levelBlocks[i][j].blockBody);
 
+					//set gameobject type to tile
 					levelBlocks[i][j].blockObject->SetType(TILE);
 
 					break;
-
+				
+				//2 set the player start position to the current position (no block)
 				case 2:
 					SetBlockNull(i, j);
 					
 					StartPosition = b2Vec2((4 * j), (4 * -i));
 					break;
 
+				// 3 loads a type 3 enemy (normal gravity) in the current array position
 				case 3:
 					SetBlockNull(i, j);
 					enemies[enemyCount] = new Enemy(3, m_world, m_builder, b2Vec2((4 * j), (4 * -i)), m_audioManager, sfx_id_shoot, sfx_id_move);
 					enemyCount++;
 					break;
 
+				// 4 loads a type 4 enemy (left)
 				case 4:
 					SetBlockNull(i, j);
 					enemies[enemyCount] = new Enemy(4, m_world, m_builder, b2Vec2((4 * j), (4 * -i)), m_audioManager, sfx_id_shoot, sfx_id_move);
 					enemyCount++;
 					break;
 
+				// type 5 enemy (up)
 				case 5:
 					SetBlockNull(i, j);
 					enemies[enemyCount] = new Enemy(5, m_world, m_builder, b2Vec2((4 * j), (4 * -i)), m_audioManager, sfx_id_shoot, sfx_id_move);
 					enemyCount++;
 					break;
 
+				// type 6 enemy (right)
 				case 6:
 					SetBlockNull(i, j);
 					enemies[enemyCount] = new Enemy(6, m_world, m_builder, b2Vec2((4 * j), (4 * -i)), m_audioManager, sfx_id_shoot, sfx_id_move);
 					enemyCount++;
 					break;
+
+				// 7 loads a type 3 enemy on normal difficulty or higher, an empty space on lower difficulties
 				case 7:
 					if (m_difficulty > 1)
 					{
@@ -138,6 +161,7 @@ void GameManager::LoadLevel()
 					else
 						SetBlockNull(i, j);
 					break;
+				// normal difficulty type 4 enemy
 				case 8:
 					if (m_difficulty > 1)
 					{
@@ -148,6 +172,7 @@ void GameManager::LoadLevel()
 					else
 						SetBlockNull(i, j);
 					break;
+				// normal difficulty type 5 enemy
 				case 9:
 					if (m_difficulty > 1)
 					{
@@ -158,6 +183,8 @@ void GameManager::LoadLevel()
 					else
 						SetBlockNull(i, j);
 					break;
+
+				//normal difficulty type 6 enemy
 				case 10:
 					if (m_difficulty > 1)
 					{
@@ -168,6 +195,8 @@ void GameManager::LoadLevel()
 					else 
 						SetBlockNull(i, j);
 					break;
+
+				//hard difficulty type 3
 				case 11:
 					if (m_difficulty > 2)
 					{
@@ -178,6 +207,8 @@ void GameManager::LoadLevel()
 					else
 						SetBlockNull(i, j);
 					break;
+
+				//hard difficulty type 4
 				case 12:
 					if (m_difficulty > 2)
 					{
@@ -188,6 +219,8 @@ void GameManager::LoadLevel()
 					else
 						SetBlockNull(i, j);
 					break;
+
+				//hard difficulty type 5
 				case 13:
 					if (m_difficulty > 2)
 					{
@@ -198,6 +231,8 @@ void GameManager::LoadLevel()
 					else
 						SetBlockNull(i, j);
 					break;
+
+				//hard difficulty type 6
 				case 14:
 					if (m_difficulty > 2)
 					{
@@ -217,11 +252,13 @@ void GameManager::LoadLevel()
 
 void GameManager::SetBlockNull(int i, int j)
 {
+	//set a block to NULL
 	levelBlocks[i][j].blockObject = NULL;
 	levelBlocks[i][j].blockBody = NULL;
 	levelBlocks[i][j].blockMesh = NULL;
 }
 
+//set all blocks and enemies to null to prepare for loading next level
 void GameManager::Reset()
 {
 	for (int i = 0; i < width; i++)
@@ -251,6 +288,7 @@ void GameManager::Reset()
 
 void GameManager::ResetAll()
 {
+	//reset level and then return to menu
 	Reset();
 	currentLevel = 1;
 	m_state = MENU;
@@ -258,6 +296,7 @@ void GameManager::ResetAll()
 
 void GameManager::Update(b2Vec2 gravity, b2Vec2 playerPos, float fpsScale)
 {
+	//loops hrough all enemies and updates them
 	for (int i = 0; i < enemyCount; i++)
 	{
 		enemies[i]->Update(gravity, playerPos, fpsScale);

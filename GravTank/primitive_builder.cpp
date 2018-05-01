@@ -39,6 +39,7 @@ void PrimitiveBuilder::Init()
 	red_material_.set_colour(0xff0000ff);
 	blue_material_.set_colour(0xffff0000);
 	green_material_.set_colour(0xff00ff00);
+	orange_material_.set_colour(0xff8888ff);
 }
 
 //

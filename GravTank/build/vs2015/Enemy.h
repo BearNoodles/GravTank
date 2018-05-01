@@ -34,6 +34,9 @@ private:
 	float speed;
 	int enemyType;
 
+	float maxShootLength;
+	bool willShoot;
+
 	bool isDead;
 
 	b2Vec2 startPosition;

@@ -76,6 +76,10 @@ public:
 		return blue_material_;
 	}
 
+	inline const gef::Material& orange_material() const {
+		return orange_material_;
+	}
+
 protected:
 	gef::Platform& platform_;
 
@@ -85,6 +89,7 @@ protected:
 	gef::Material red_material_;
 	gef::Material blue_material_;
 	gef::Material green_material_;
+	gef::Material orange_material_;
 };
 
 #endif // _PRIMITIVE_BUILDER_H

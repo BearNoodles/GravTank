@@ -237,7 +237,6 @@
     <ClCompile Include="audio_3d.cpp" />
     <ClCompile Include="audio_emitter.cpp" />
     <ClCompile Include="audio_listener.cpp" />
-    <ClCompile Include="BodyObject.cpp" />
     <ClCompile Include="Bullet.cpp" />
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="Enemy.cpp" />
@@ -253,7 +252,6 @@
     <ClInclude Include="audio_3d.h" />
     <ClInclude Include="audio_emitter.h" />
     <ClInclude Include="audio_listener.h" />
-    <ClInclude Include="BodyObject.h" />
     <ClInclude Include="Bullet.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="Enemy.h" />

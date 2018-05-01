@@ -13,6 +13,7 @@ gef::Sprite Menu::GetSprite()
 	return m_sprite;
 }
 
+//Set up sprite for the menu screen
 void Menu::SetSprite(gef::Sprite sprite)
 {
 	m_sprite = sprite;

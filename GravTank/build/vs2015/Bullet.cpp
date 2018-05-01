@@ -32,17 +32,19 @@ Bullet::Bullet(b2Vec2 pos, b2World* world, PrimitiveBuilder* builder) :
 	// create the fixture on the rigid body
 	m_body->CreateFixture(&fixture_def);
 
-	//set player gamebject type
+	//set bullet gamebject type
 	SetType(BULLET);
 
 	// update visuals from simulation data
 	UpdateFromSimulation(m_body);
 
+	//start body as inactive
 	m_body->SetActive(false);
 }
 
 void Bullet::Update()
 {
+	//update position of bullet from body if it is currently active
 	if (m_body->IsActive())
 	{
 		UpdateFromSimulation(m_body);
@@ -51,10 +53,14 @@ void Bullet::Update()
 
 void Bullet::Fire(b2Vec2 force, b2Vec2 pos, b2Vec2 offset)
 {
+	//set position of bullet to just in front of shooter
 	m_body->SetTransform(pos + offset, m_body->GetAngle());
+	//set body to active
 	m_body->SetActive(true);
 
+	//set velocity to zero in case is carries over from last shot
 	m_body->SetLinearVelocity(b2Vec2_zero);
+	//apply desired force to bullet
 	m_body->ApplyForceToCenter(force, true);
 }
 

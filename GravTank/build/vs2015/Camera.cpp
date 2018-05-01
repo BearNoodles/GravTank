@@ -4,6 +4,7 @@
 
 Camera::Camera()
 {
+	//initial camera values
 	cameraUp.set_value(0.0f, 1.0f, 0.0f);
 	cameraRight.Set(1.0f, 0.0f);
 	cameraTarget.set_value(8.0f, 8.0f, 0.0f);
@@ -14,11 +15,13 @@ Camera::Camera()
 // 1 is clockwise, -1 is anti clockwise
 void Camera::RotateCam(int dir = 1)
 {
+	//calculate camera rotations based on given direction
 	float camx;
 	float camy;
 	camx = (cos(-dir * 3.14159 / 40) * cameraUp.x()) - (sin(-dir * 3.14159 / 40) * cameraUp.y());
 	camy = (sin(-dir * 3.14159 / 40) * cameraUp.x()) + (cos(-dir * 3.14159 / 40) * cameraUp.y());
 	
+	//if camera x or y is within a certain range set to target x or y
 	if (b2Abs(camx - cameraTarget.x()) < CAMMARGIN || b2Abs(camx - cameraTarget.x()) < CAMMARGIN)
 	{
 		camx = cameraTarget.x();
@@ -28,6 +31,7 @@ void Camera::RotateCam(int dir = 1)
 		camy = cameraTarget.y();
 	}
 
+	//set camera up and right vector
 	cameraUp.set_value(camx, camy, cameraUp.z());
 
 	cameraRight.Set(camy, -camx);
@@ -65,18 +69,21 @@ void Camera::SetRotatePause(bool value)
 
 bool Camera::CameraTargetReached()
 {
+	//remove target and return true that camera has reached is target to stop it from rotating furher
 	if (cameraUp.x() == cameraTarget.x() && cameraUp.y() == cameraTarget.y())
 	{
 		cameraTarget.set_value(0.0f, 0.0f, 0.0f);
 		SetRotatePause(false);
 		return true;
 	}
+	//else target not reached
 	else
 	{
 		return false;
 	}
 }
 
+//called when rotation target switches (player moving left and right while rotating
 void Camera::ChangeCameraTarget(int dir)
 {
 	currentTarget += dir;
@@ -89,6 +96,7 @@ void Camera::ChangeCameraTarget(int dir)
 
 void Camera::SetCameraTarget(int dir)
 {
+	//set target "up" values for each direction
 	switch (dir)
 	{
 		case 0:
@@ -113,6 +121,7 @@ void Camera::SetCameraTarget(int dir)
 
 void Camera::ResetCamera()
 {
+	//set camera vectors back to inital values
 	cameraUp.set_value(0.0f, 1.0f, 0.0f);
 	cameraRight.Set(1.0f, 0.0f);
 	cameraTarget.set_value(8.0f, 8.0f, 0.0f);

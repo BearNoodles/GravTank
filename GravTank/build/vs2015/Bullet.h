@@ -12,10 +12,14 @@ public:
 	void CleanUp();
 
 	void Update();
+
+	//return bullet body
 	b2Body* GetBody();
 
+	//Fire bullet given a direction and a start point
 	void Fire(b2Vec2 force, b2Vec2 pos, b2Vec2 offset);
 
+	//Set bullet inactive
 	void Reset();
 
 private:

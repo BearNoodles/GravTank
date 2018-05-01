@@ -8,7 +8,6 @@ Explosion::Explosion(b2Vec2 pos, b2World* world, PrimitiveBuilder* builder) :
 {
 	SetBulletType(NOBULLET);
 	// setup the mesh
-
 	gef::Vector4 halfDimensions(1.5f, 1.5f, 0.01f);
 	set_mesh(m_builder->CreateBoxMesh(halfDimensions));
 
@@ -33,7 +32,7 @@ Explosion::Explosion(b2Vec2 pos, b2World* world, PrimitiveBuilder* builder) :
 	// create the fixture on the rigid body
 	m_body->CreateFixture(&fixture_def);
 
-	//set player gamebject type
+	//set gamebject type
 	SetType(BULLET);
 
 	// update visuals from simulation data
@@ -41,12 +40,14 @@ Explosion::Explosion(b2Vec2 pos, b2World* world, PrimitiveBuilder* builder) :
 
 	m_body->SetActive(false);
 
+	//set how many frames explosion is active for
 	activeCount = 8;
 	timer = 0;
 }
 
 void Explosion::Update()
 {
+	//update explosion if active and reset it when timer is up
 	if (m_body->IsActive())
 	{
 		timer++;
@@ -54,11 +55,13 @@ void Explosion::Update()
 		{
 			Reset();
 		}
+		//keep it from moving
 		m_body->SetLinearVelocity(b2Vec2_zero);
 		UpdateFromSimulation(m_body);
 	}
 }
 
+//st off explosion
 void Explosion::Activate(b2Vec2 pos)
 {
 	timer = 0;

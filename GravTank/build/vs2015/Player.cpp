@@ -8,8 +8,13 @@ Player::Player(b2World* world, PrimitiveBuilder* builder, b2Vec2 startPos, gef::
 	bullet(NULL),
 	explode(NULL)
 {
+	//set start position
 	startPosition = startPos;
+
+	//give player a physics body
 	InitBody();
+
+	//set sound effect ids
 	sfx_id_shoot = shootID;
 	sfx_id_move = moveID;
 	sfx_id_explode = explodeID;
@@ -17,21 +22,33 @@ Player::Player(b2World* world, PrimitiveBuilder* builder, b2Vec2 startPos, gef::
 	voice_id_move = -1;
 	voice_id_explode = -1;
 	m_audioManager = audioManager;
+	
+	//create bullet explosion and turret objects
 	CreateBullet();
 	CreateExplosion();
 	CreateTurret();
+
+	//playre can shoot from the start
 	canShoot = true;
+
+	//right and left have not been pressed
 	playerRight = false;
 	playerLeft = false;
+
+	//set health initial values
 	maxHealth = 6;
 	health = maxHealth;
+
+	//force which player fires bullet
 	bulletForce = 200;
 }
 
 void Player::InitBody()
 {
+	//player speed
 	speed = 9.0f;
 
+	//mesh half dimensions
 	gef::Vector4 halfDimensions(0.75f, 0.75f, 0.75f);
 	set_mesh(m_builder->CreateBoxMesh(halfDimensions));
 	
@@ -89,7 +106,7 @@ bool Player::IsExploding()
 void Player::CreateTurret()
 {
 	turretRot = 0;
-	gef::Vector4 halfSize(0.125f, 0.5f, 0);
+	gef::Vector4 halfSize(0.125f, 0.75f, 0);
 	turret = new GameObject();
 	turret->set_mesh(m_builder->CreateBoxMesh(halfSize));
 
@@ -99,6 +116,7 @@ void Player::CreateTurret()
 
 void Player::PositionTurret(float x, float y)
 {
+	//normalised vectors for stick position, so turret doesnt gradually poke out
 	b2Vec2 norms(x, y);
 	norms.Normalize();
 	// setup object rotation
@@ -118,14 +136,18 @@ void Player::PositionTurret(float x, float y)
 
 void Player::Update(float x, float y, b2Vec2 up)
 {
+	//update player body, and the bullet and explosion
 	UpdateFromSimulation(m_body);
 	bullet->Update();
 	explode->Update();
+
+	//check if bullet can be shot again
 	if (!bullet->GetBody()->IsActive())
 	{
 		canShoot = true;
 	}
 
+	//change given stick input values for the current camera position
 	if (up.x == 1)
 	{
 		stickX = -y;
@@ -147,22 +169,13 @@ void Player::Update(float x, float y, b2Vec2 up)
 		stickY = y;
 	}
 	//float rot = b2Atan2(up.x, up.y);
+
+	//set turret rotation based on sticks and up vector
 	turretRot = b2Atan2(stickX, stickY);
+
+	//update turret position
 	PositionTurret(stickX, stickY);
 
-	
-	//turret->UpdateFromSimulation(m_turretBody);
-	//if (bullet != NULL && !canShoot)
-	//{
-	//	if (bullet->GetBody()->IsActive())
-	//	{
-	//		if (bullet->GetBody()->GetContactList() != NULL)
-	//		{
-	//			//bullet->Reset();
-	//			canShoot = true;
-	//		}
-	//	}
-	//}
 }
 int Player::GetHealth()
 {
@@ -226,7 +239,9 @@ void Player::Shoot(float shotScale)
 {
 	if (canShoot)
 	{
+		//play shot sound
 		voice_id_shoot = m_audioManager->PlaySample(sfx_id_shoot);
+		//get stick normals to use as an offset for the bullets start position so it doesnt touch the player
 		b2Vec2 norms(stickX, stickY);
 		norms.Normalize();
 		bullet->Fire(b2Vec2(stickX * bulletForce * shotScale, -stickY * bulletForce * shotScale), m_body->GetPosition(), b2Vec2(norms.x * 1.5f, -norms.y * 1.5f));
@@ -236,6 +251,7 @@ void Player::Shoot(float shotScale)
 
 void Player::ExplodeBullet()
 {
+	//if player cant currently shoot then the bullet is active meaning it can be exploded
 	if (!canShoot)
 	{
 		voice_id_explode = m_audioManager->PlaySample(sfx_id_explode);
@@ -253,6 +269,7 @@ b2Vec2 Player::GetPosition()
 
 void Player::SetPosition(b2Vec2 pos)
 {
+	//set body position (for resetting) and make sure the sound effect stops
 	m_body->SetTransform(pos, m_body->GetAngle());
 	if (voice_id_shoot != -1)
 		m_audioManager->StopPlayingSampleVoice(voice_id_shoot);

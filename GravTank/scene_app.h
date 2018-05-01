@@ -38,9 +38,13 @@ public:
 	SceneApp(gef::Platform& platform);
 	void Init();
 	void CleanUp();
+
 	bool Update(float frame_time);
-	void UpdatePlaying(float frame_time);
+	
+	void UpdatePlaying(float frame_time); //Different update functions depending on gamestate
 	void UpdateMenu();
+	void UpdatePause();
+
 	void Render();
 private:
 	void InitBackground();
@@ -52,10 +56,11 @@ private:
 	void ProcessControllerInput();
 	void ProcessKeyboardInput();
 
+	//Reloads either current level or loads next level depeding on the bool argument
 	void ResetLevel(bool nextLevel);
+	//Special case reload for when player dies
 	void PlayerDeath();
 
-	GameObject* toDel;
     
 	gef::SpriteRenderer* sprite_renderer_;
 	gef::Font* font_;
@@ -63,7 +68,7 @@ private:
 
 	gef::InputManager* input_manager_;
 	
-	void RightPressed();
+	void RightPressed(); //Function for when player presses a direction
 	void LeftPressed();
 	void StopPlayer();
 
@@ -76,6 +81,10 @@ private:
 	Player* player;
 	float playerSpeed;
 	gef::Sprite healths[6];
+	int playerHealth;
+
+	int enemiesLeft;
+	int levelNo;
 
 	bool L2Pressed;
 
@@ -87,19 +96,21 @@ private:
 	GameObject ground_;
 	b2Body* ground_body_;
 
-	//levelBuild 
+	//Gamemanager creates levels and handles gamestate 
 	GameManager* gameManager;
 	int levelWidth = 15;
 	int levelHeight = 15;
 
-	//building variables
+	//Background meshs
 	gef::Mesh* backMesh;
 	GameObject back;
 	gef::Mesh* backMesh2;
 	GameObject back2;
 
+	//Controls the moving camera
 	Camera camera;
 
+	//Front menu
 	Menu* menu;
 	int screenWidth;
 	int screenHeight;
@@ -109,8 +120,9 @@ private:
 
 	float fps_;
 
-	float fpsScale;
+	float fpsScale; // for scaling speeds up when fps drops
 
+	//Image texture material and sprites
 	gef::PNGLoader pngLoader;
 	
 	gef::ImageData healthImage;
@@ -156,10 +168,17 @@ private:
 	gef::Material* startMaterial;
 	gef::Sprite startSprite;
 
+	gef::ImageData pauseImage;
+	gef::Texture* pauseTexture;
+	gef::Sprite pauseSprite;
+
+	void InitTextures();
+
 	void DrawMenu();
 
 	gef::AudioManager* audio_manager_;
 
+	//Sound effect ids
 	int sfx_id_shoot;
 	int sfx_id_move;
 	int sfx_id_explode;

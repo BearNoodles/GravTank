@@ -4,11 +4,13 @@
 #include <graphics/mesh_instance.h>
 #include <box2d/Box2D.h>
 
+//Gameobject type for resolving collisions
 enum ObjectType
 {
 	NONE, PLAYER, ENEMY, BULLET, TILE
 };
 
+//If its a bullet bullet type says who shot it
 enum BulletType
 {
 	NOBULLET, PLAYERBULLET, ENEMYBULLET, EXPLOSION
@@ -22,7 +24,6 @@ public:
 	virtual void MyCollisionResponse();
 	void SetType(ObjectType type);
 	ObjectType GetType();
-	void Die();
 
 	
 	BulletType GetBulletType();
