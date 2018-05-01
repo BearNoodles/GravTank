@@ -77,7 +77,7 @@ private:
 	float playerSpeed;
 	gef::Sprite healths[6];
 
-	bool L2Held;
+	bool L2Pressed;
 
 	float rightStickX;
 	float rightStickY;

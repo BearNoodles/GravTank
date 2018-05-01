@@ -30,7 +30,7 @@ Player::Player(b2World* world, PrimitiveBuilder* builder, b2Vec2 startPos, gef::
 
 void Player::InitBody()
 {
-	speed = 6.0f;
+	speed = 9.0f;
 
 	gef::Vector4 halfDimensions(0.75f, 0.75f, 0.75f);
 	set_mesh(m_builder->CreateBoxMesh(halfDimensions));

@@ -38,7 +38,7 @@ void SceneApp::Init()
 	// initialise primitive builder to make create some 3D geometry easier
 	primitive_builder_ = new PrimitiveBuilder(platform_);
 
-	L2Held = false;
+	L2Pressed= false;
 
 	rightStickX = 0;
 	rightStickY = -1;
@@ -433,21 +433,22 @@ void SceneApp::ProcessControllerInput()
 				}
 				if (controller->buttons_pressed() & gef_SONY_CTRL_L2)
 				{
-					if (camera.GetCameraTarget() == 0 || camera.GetCameraTarget() == 2)
-					{
-						player->SetVelocity(b2Vec2(0.0f, player->GetVelocity().y));
-					}
-					else
-					{
-						player->SetVelocity(b2Vec2(player->GetVelocity().x, 0.0f));
-					}
-					player->SetMoveSound(false);
-
-					if (!camera.GetRotating())
-					{
-						player->SetPlayerRight(false);
-						player->SetPlayerLeft(false);
-					}
+					L2Pressed = true;
+					//if (camera.GetCameraTarget() == 0 || camera.GetCameraTarget() == 2)
+					//{
+					//	player->SetVelocity(b2Vec2(0.0f, player->GetVelocity().y));
+					//}
+					//else
+					//{
+					//	player->SetVelocity(b2Vec2(player->GetVelocity().x, 0.0f));
+					//}
+					//player->SetMoveSound(false);
+					//
+					//if (!camera.GetRotating())
+					//{
+					//	player->SetPlayerRight(false);
+					//	player->SetPlayerLeft(false);
+					//}
 				}
 				else
 				{
@@ -456,11 +457,15 @@ void SceneApp::ProcessControllerInput()
 				if (controller->left_stick_x_axis() >= 0.3f)
 				{
 					RightPressed();
+
+					L2Pressed = false;
 				}
 
 				else if (controller->left_stick_x_axis() <= -0.3f)
 				{
 					LeftPressed();
+
+					L2Pressed = false;
 				}
 
 				else
@@ -808,12 +813,16 @@ void SceneApp::RightPressed()
 	{
 		if (camera.GetCameraTarget() == 0 || camera.GetCameraTarget() == 2)
 		{
-			//if (!L2Held)
+			if (L2Pressed)
+				player->SetVelocity(b2Vec2(0, player->GetVelocity().y));
+			else
 				player->SetVelocity(b2Vec2(playerSpeed * camera.GetCameraRight().x, player->GetVelocity().y));
 		}
 		else
 		{
-			//if (!L2Held)
+			if(L2Pressed)
+				player->SetVelocity(b2Vec2(player->GetVelocity().x, 0));
+			else
 				player->SetVelocity(b2Vec2(player->GetVelocity().x, playerSpeed * camera.GetCameraRight().y));
 		}
 
@@ -859,12 +868,16 @@ void SceneApp::LeftPressed()
 	{
 		if (camera.GetCameraTarget() == 0 || camera.GetCameraTarget() == 2)
 		{
-			//if (!L2Held)
+			if (L2Pressed)
+				player->SetVelocity(b2Vec2(0, player->GetVelocity().y));
+			else
 				player->SetVelocity(b2Vec2(-playerSpeed * camera.GetCameraRight().x, player->GetVelocity().y));
 		}
 		else
 		{
-			//if (!L2Held)
+			if (L2Pressed)
+				player->SetVelocity(b2Vec2(player->GetVelocity().x, 0));
+			else
 				player->SetVelocity(b2Vec2(player->GetVelocity().x, -playerSpeed * camera.GetCameraRight().y));
 		}
 		player->SetPlayerLeft(true);
@@ -897,6 +910,7 @@ void SceneApp::StopPlayer()
 
 void SceneApp::ResetLevel(bool nextLevel)
 {
+	L2Pressed = false;
 	gameManager->SetState(PLAYING);
 	gameManager->Reset();
 	if (nextLevel)

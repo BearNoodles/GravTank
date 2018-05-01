@@ -8,7 +8,7 @@ GameManager::GameManager(b2World* world, PrimitiveBuilder* builder, gef::AudioMa
 	m_builder(builder)
 {
 	m_state = MENU;
-	currentLevel = 3;
+	currentLevel = 1;
 	enemyCount = 0;
 	m_difficulty = 1;
 	m_audioManager = audioManager;
@@ -119,9 +119,6 @@ void GameManager::LoadLevel()
 
 				case 5:
 					SetBlockNull(i, j);
-					//levelBlocks[i][j].blockObject = NULL;
-					levelBlocks[i][j].blockBody = NULL;
-					levelBlocks[i][j].blockMesh = NULL;
 					enemies[enemyCount] = new Enemy(5, m_world, m_builder, b2Vec2((4 * j), (4 * -i)), m_audioManager, sfx_id_shoot, sfx_id_move);
 					enemyCount++;
 					break;
@@ -169,6 +166,46 @@ void GameManager::LoadLevel()
 						enemyCount++;
 					}
 					else 
+						SetBlockNull(i, j);
+					break;
+				case 11:
+					if (m_difficulty > 2)
+					{
+						SetBlockNull(i, j);
+						enemies[enemyCount] = new Enemy(3, m_world, m_builder, b2Vec2((4 * j), (4 * -i)), m_audioManager, sfx_id_shoot, sfx_id_move);
+						enemyCount++;
+					}
+					else
+						SetBlockNull(i, j);
+					break;
+				case 12:
+					if (m_difficulty > 2)
+					{
+						SetBlockNull(i, j);
+						enemies[enemyCount] = new Enemy(4, m_world, m_builder, b2Vec2((4 * j), (4 * -i)), m_audioManager, sfx_id_shoot, sfx_id_move);
+						enemyCount++;
+					}
+					else
+						SetBlockNull(i, j);
+					break;
+				case 13:
+					if (m_difficulty > 2)
+					{
+						SetBlockNull(i, j);
+						enemies[enemyCount] = new Enemy(5, m_world, m_builder, b2Vec2((4 * j), (4 * -i)), m_audioManager, sfx_id_shoot, sfx_id_move);
+						enemyCount++;
+					}
+					else
+						SetBlockNull(i, j);
+					break;
+				case 14:
+					if (m_difficulty > 2)
+					{
+						SetBlockNull(i, j);
+						enemies[enemyCount] = new Enemy(6, m_world, m_builder, b2Vec2((4 * j), (4 * -i)), m_audioManager, sfx_id_shoot, sfx_id_move);
+						enemyCount++;
+					}
+					else
 						SetBlockNull(i, j);
 					break;
 			}
